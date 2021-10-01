@@ -21,4 +21,22 @@ for l in ['l','c']
   exe escape(l.'no<buffer>'.p.a[i].' '.b[i],'|')
  endfor
 endfor
-unl p a b l i
+
+" Add functions for making ⟨⟩ usable as a text object
+function! s:aroundBQNList()
+    call searchpair('⟨','','⟩', 'cW')
+    normal! v%
+endfunction
+
+function! s:insideBQNList()
+    call s:aroundBQNList()
+    normal! loh
+endfunction
+
+for par in [get(a, index(b, '⟨')), get(a, index(b, '⟩'))]
+ for l in [["a", "aroundBQNList"], ["i", "insideBQNList"]]
+  exec escape("onoremap<silent><buffer>".l[0].p.par." :call <sid>".l[1]."()<cr>", "|")
+ endfor
+endfor
+
+unl p a b l i par
