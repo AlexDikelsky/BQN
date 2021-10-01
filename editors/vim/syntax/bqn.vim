@@ -22,7 +22,7 @@ syn match bqnfid "•\?[A-Z][A-Z_a-z0-9π∞¯]*"
 syn match bqn1id "\(•\?_[A-Za-z][A-Z_a-z0-9π∞¯]*\|_𝕣\)"
 syn match bqn2id "\(•\?_[A-Za-z][A-Z_a-z0-9π∞¯]*_\|_𝕣_\)"
 syn match bqndot "\."
-syn match bqncom "#.*$"
+syn match bqncom "#.*$" contains=@Spell
 syn match bqnquo /""/ contained
 syn region bqnstr matchgroup=bqnstr start=/"/ end=/"/ contains=bqnquo
 syn sync fromstart
