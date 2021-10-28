@@ -2,7 +2,7 @@
 
 # Expression syntax
 
-BQN expressions are the part of [syntax](syntax.md) that describes computations to perform. Programs are mainly made up of expressions with a little organizing material like [blocks](block.md) and [namespaces](namespace.md) around them. This page explains how functions, modifiers, and assignment combine with their inputs. It doesn't describe [constant](syntax.md#constant) and [array](arrayrepr.md#list-literals) literals, which each form a single subject for grammatical purposes.
+BQN expressions are the part of [syntax](syntax.md) that describes computations to perform. Programs are mainly made up of expressions with a little organizing material like [blocks](block.md) and [namespaces](namespace.md) around them. This page explains how functions, modifiers, and assignment combine with their inputs. It doesn't describe [constant](syntax.md#constants) and [array](arrayrepr.md#list-literals) literals, which each form a single subject for grammatical purposes.
 
 The [first tutorial](../tutorial/expression.md) also covers how to build and read BQN expressions.
 
@@ -18,6 +18,8 @@ BQN expressions consist of subjects, functions, and modifiers arranged in sequen
 |  `F`  | `_c_` |  `G`  | Function   | 2-Modifier |
 
 The four roles (subject, function, two kinds of modifier) describe expressions, not values. When an expression is evaluated, the value's [type](types.md) doesn't have to correspond to its role, and can even change from one evaluation to another. An expression's role is determined entirely by its source code, so it's fixed.
+
+In the table, `?` marks an optional left argument. If there isn't a value in that position, or it's [Nothing](#nothing) (`·`), the middle function will be called with only one argument.
 
 If you're comfortable reading [BNF](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form) and want to understand things in more detail than described below, you might check the [grammar specification](../spec/grammar.md) as well.
 
@@ -48,6 +50,18 @@ Besides these, character, string, and [list literals](arrayrepr.md#list-literals
 
 The role of a compound expression, formed by applying an operation to some inputs, depends on the operation applied. This system is discussed in the remaining sections below.
 
+## Nothing
+
+The character `·` is called Nothing. While it can be easier to think of it as a value, it can't be passed around in variables, and so can also be interpreted as an element of syntax. The special name `𝕨` also functions as Nothing if the block that contains it is called with one argument (the uppercase spelling `𝕎` doesn't, but instead immediately causes an error). Both `·` and `𝕨` have a subject role.
+
+The following rules apply to Nothing:
+- If it's the left argument in a function call, the function is called with no left argument.
+- If it's the right argument, the function isn't called, and "returns" Nothing.
+
+For example, the expression `(F 2 G ·) H I j` is equivalent to `H I j`. But functions and arguments that would be discarded by the second rule are still evaluated, so that for example `(a+↩1) F ·` increments `a` when run.
+
+Nothing can only be used as an argument to a function, or the left argument in a train (it can't be the right argument in a train because a train ends with a function by definition). In another position where a subject could appear, like as an operand or in a list, it causes an error: either at compile time, for `·`, or when the function is called with no left argument, for `𝕨`.
+
 ## Kinds of application
 
 Here is a table of the modifier and function application rules:
@@ -63,4 +77,4 @@ Here is a table of the modifier and function application rules:
 |       | `_c_` |  `G*` | 1-Modifier | Partial application
 |  `F*` | `_c_` |       | 1-Modifier | Partial application
 
-A function with an asterisk indicates that a subject can also be used. Since the role doesn't exist after parting function and subject spellings are indistinguishable in these positions. Modifier applications bind more tightly than functions, and associate left-to-right while functions associate right-to-left.
+A function with an asterisk indicates that a subject can also be used. Since the role doesn't exist after parsing, function and subject spellings are indistinguishable in these positions. Modifier applications bind more tightly than functions, and associate left-to-right while functions associate right-to-left.

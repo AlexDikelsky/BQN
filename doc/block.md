@@ -26,7 +26,7 @@ An immediate block is only ever evaluated once, and can't be used for control fl
 | Lowercase | Uppercase | Meaning
 |-----------|-----------|---------
 | `𝕩`       | `𝕏`       | Right [argument](#arguments)
-| `𝕨`       | `𝕎`       | Left [argument](#arguments), or Nothing (`·`)
+| `𝕨`       | `𝕎`       | Left [argument](#arguments), or [Nothing](expression.md#nothing) (`·`)
 | `𝕤`       | `𝕊`       | Function [self-reference](#self-reference)
 | `𝕗`       | `𝔽`       | Left [operand](#operands)
 | `𝕘`       | `𝔾`       | Right [operand](#operands)
@@ -42,7 +42,7 @@ The names `𝕨` and `𝕩`, and their uppercase spellings, represent function a
         { 𝕩+↩2 ⋄ 0≍𝕩 } 3
         4 { ⟨𝕩⋄-𝕨⟩ } 5
 
-A function with `𝕨` in its definition doesn't have to be called with two arguments. If it has only one, then `𝕨` is given the special value Nothing `·`. This is the only time a variable can ever be Nothing, as an assignment such as `v←·` is not allowed.
+A function with `𝕨` in its definition doesn't have to be called with two arguments. If it has only one, then `𝕨` is given the special value [Nothing](expression.md#nothing), or `·`. This is the only time a variable can ever be Nothing, as an assignment such as `v←·` is not allowed.
 
         3 { (2×𝕨)-𝕩 } 1
           { (2×𝕨)-𝕩 } 1
@@ -187,6 +187,32 @@ A special rule allows for convenient case-matching syntax for one-argument funct
     }
 
 These case-style headers function exactly the same as if they were preceded by `𝕊`, and can be mixed with other kinds of headers.
+
+### Predicates
+
+Destructuring with a header is quite limited, only allowing matching structure and data with exact equality. A predicate, written with `?`, allows you to test an arbitrary property before evaluating the rest of the body, and also serves as a limited kind of control flow. It can be thought of as an extension to a header, so that for example the following function requires the argument to have two elements and for the first to be less than the second before using the first body. Otherwise it moves to the next body, which is unconditional.
+
+        CheckPair ← { 𝕊⟨a,b⟩: a<b? "ok" ; "not ok" }
+
+        CheckPair ⟨3,8⟩    # Fails destructuring
+        CheckPair ⟨1,4,5⟩  # Not a pair
+        CheckPair ⟨3,¯1⟩   # Not ascending
+
+The body where the predicate appears doesn't need to start with a header, and there can be other statements before it. In fact, `?` functions just like a separator (like `⋄` or `,`) with a side effect.
+
+        { r←⌽𝕩 ⋄ 't'=⊑r ? r ; 𝕩 }¨ "test"‿"this"
+
+So `r` is the reversed argument, and if its first character (the last one in `𝕩`) is `'t'` then it returns `r`, and otherwise we abandon that line of reasoning and return `𝕩`. This sounds a lot like an if statement. And `{ a<b ? a ; b }`, which computes `a⌊b` the hard way, shows how the syntax can be similar to a ternary operator. This is an immediate block with multiple bodies, something that makes sense with predicates but not headers. But `?;` offers more possibilities. It can support any number of options, with multiple tests for each one—the structure below is "if \_ and \_ then \_; else if \_ then \_; else \_".
+
+        Thing ← { 𝕩≥3? 𝕩≤8? 2|𝕩 ; 𝕩=0? @ ; ∞ }
+
+        (⊢ ≍ Thing¨) ↕10  # Table of arguments and results
+
+This structure is still constrained by the rules of block bodies: each instance of `;` is a separate scope, so that variables defined before a `?` don't survive past the `;`.
+
+        { 0=n←≠𝕩 ? ∞ ; n } "abc"
+
+This is the main drawback of predicates relative to guards in APL dfns (also written with `?`), while the advantage is that it allows multiple expressions, or extra conditions, after a `?`. It's not how I would have designed it if I just wanted to make a syntax for if statements, but it's a natural fit for the header system.
 
 ## Returns
 

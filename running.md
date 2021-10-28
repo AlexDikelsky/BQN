@@ -2,7 +2,9 @@
 
 # How to run BQN
 
-[CBQN](https://github.com/dzaima/CBQN) is now the primary offline implementation. However, many scripts have been written for dzaima/BQN and they're not all transferred over yet. Scripts in this repository use `bqn` in the `#!` line if self-hosted or dzaima/BQN can run them, and `dbqn` if only dzaima/BQN works.
+[CBQN](https://github.com/dzaima/CBQN) is now the primary offline implementation. However, dzaima/BQN still works, and is used for some testing. Scripts in this repository use `bqn` in the `#!` line if any BQN can run them, and `dbqn` if only dzaima/BQN works.
+
+For Nix users, nixpkgs now has repositories for several implementations; `cbqn` is recommended for general use.
 
 ### Self-hosted BQN
 
@@ -14,7 +16,7 @@ Support in the following languages has been implemented:
 - Javascript, in this repository. Slow (compiles at ~5kB/s) but usable.
 - [C](https://github.com/dzaima/CBQN), targetting high performance. Some parts are fast, some are not.
 - dzaima/BQN ([bqn.bqn](bqn.bqn)), mainly for testing.
-- [Erlang](https://github.com/cannadayr/ebqn), intended for embedding. Too slow to be practical yet: minutes to compile short programs.
+- [Erlang](https://github.com/cannadayr/ebqn), intended for embedding. Too slow to be practical; a [Rust version](https://github.com/cannadayr/ebqn-rs/) is in progress to fix this.
 
 #### Javascript
 
@@ -42,7 +44,7 @@ If compiled with Native Image, `nBQN` can be used directly instead.
 
 #### dzaima+reference BQN
 
-This repository contains a dzaima/BQN script `dzref` that fills in gaps in primitive support with BQN implementations. dzaima/BQN has good enough primitive support that I now almost never use this, but it's still needed for the website generator md.bqn. The command-line arguments are a script to run and followed by the `•args` to supply to it.
+This repository contains a dzaima/BQN script `dzref` that fills in gaps in primitive support with BQN implementations. It was used for md.bqn for a while and is no longer used now. The command-line arguments are a script to run and followed by the `•args` to supply to it.
 
 ### BQN2NGN
 
