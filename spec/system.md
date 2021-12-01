@@ -38,6 +38,7 @@ The option `repl` indicates how variables are retained across calls: with "none"
 | `•args`    | Arguments passed to current file
 | `•path`    | Current file's path
 | `•name`    | Current filename
+| `•wdpath`  | Shell's working directory path
 | `•Exit`    | Leave the top-level running program
 
 `•Import` loads another BQN script. The script is evaluated in its own isolated scope, and its result is either the result of the last line, or a module if it exports with `⇐` at the top level. If it is a module, then it must be destructured immediately unless first-class namespaces are possible.
@@ -49,6 +50,8 @@ The right argument is a filename, which may be relative or absolute. Relative pa
 `•path` simply gives the path of the file in which it appears. It includes a trailing slash but not the name of the file itself.
 
 `•name` gives the name, including the extension, of the file in which it appears. It doesn't include the path.
+
+`•wdpath` returns the path of the current working directory, like the Unix `pwd` command, but including a trailing slash.
 
 `•Exit` immediately terminates the running BQN process. If the argument is a valid return code (on Unix, an integer), it is returned; otherwise, the default return code (the one returned when the end of the program is reached) is used.
 
@@ -89,7 +92,7 @@ Metadata functions may query information about a file or directory but do not re
 | `Permissions` | Query or set file permissions
 | `Owner`       | Query or set owner user ID and group ID number
 
-Times are Unix timestamps, that is, seconds since the Unix epoch, as used by [time](#time) system values. File permissions on Unix are a three-element list of numbers giving the permissions for the owner, group, and other users. The file type is one of the following characters for the POSIX file types, matching Unix `ls -l` with `'f'` instead of `'-'`.
+Times are Unix timestamps, that is, non-leap seconds since the Unix epoch, as used by [time](#time) system values. File permissions on Unix are a three-element list of numbers giving the permissions for the owner, group, and other users. The file type is one of the following characters for the POSIX file types, matching Unix `ls -l` with `'f'` instead of `'-'`.
 
 - `'f'`: File
 - `'d'`: Directory
@@ -149,6 +152,14 @@ The following short names can also be provided for file access. They can be prov
 
 `•Repr` attempts to return a string so that `•BQN •Repr 𝕩` matches `𝕩`. If `𝕩` contains any mutable values (operations or namespaces), this is not possible. However, if such a values is stateless, in the sense that they don't access variables outside of their own scopes, it is permissible for `•Repr` to return source code that would create a value with identical behavior.
 
+## Interface
+
+| Name    | Summary
+|---------|----------------------
+| `•SH`   | Execute shell command and return `exitcode‿stdout‿stderr`
+
+The argument to `•SH` is a list of strings giving the command and its arguments (for example `"mv"‿"old"‿"new"`). The command is executed synchronously, and the result is a list of three elements: the command's exit code, text written to stdout, and text written to stderr. In both cases the text is a plain string containing all text emitted by the program. Text is interpreted as UTF-8, with an error if it's not valid UTF-8.
+
 ## Operation properties
 
 | Name         | Summary
@@ -187,8 +198,6 @@ Each function in this section is monadic.
 | 3-train       |  3   | `f,g,h`
 | 1-mod         |  4   | `𝕗,𝕣`
 | 2-mod         |  5   | `𝕗,𝕣,𝕘`
-| Left partial  |  6   | `𝕗,𝕣`
-| Right partial |  7   | `  𝕣,𝕘`
 
 ## Time
 
@@ -202,7 +211,7 @@ Each function in this section is monadic.
 
 All times are measured in seconds.
 
-The [Unix epoch](https://en.wikipedia.org/wiki/Unix_time) is 1970-01-01 00:00:00 UTC. `•UnixTime` is intended for absolute time measurement and should be implemented with the method that gives the most accurate result at any given time. `•MonoTime` is intended for relative measurement and should use the method that gives the most precise time differences over the course of the program. Its return value must never decrease between calls.
+The [Unix epoch](https://en.wikipedia.org/wiki/Unix_time) is 1970-01-01 00:00:00 UTC, and [Unix time](https://en.wikipedia.org/wiki/Unix_time) is the number of seconds since this epoch, with adjustments for leap seconds. `•UnixTime` is intended for absolute time measurement and should use the source most accurate reflects Unix time when it's called. `•MonoTime` is intended for relative measurement and should use the method that gives the most precise time differences over the course of the program. Its return value must never decrease between calls.
 
 `•_timed` returns the total time taken divided by the number of function calls (`𝕨` if provided and 1 otherwise), including the overhead required for the outer loop that counts iterations (which will typically be negligible in comparison to the BQN code).
 

@@ -2,7 +2,9 @@
 
 # The BQN virtual machine and runtime
 
-BQN's self-hosted compiler and runtime mean that only a small amount of native code is needed to run BQN on any given platform. The [Javascript environment](../docs/bqn.js) requires about 500 lines of Javascript code including system functions and performance improvements; probably around 250 would be required just to run the core language. This makes it fairly easy to port BQN to new platforms, allowing BQN to be [embedded](../doc/embed.md) within other programming languages and interact with arrays or functions in those languages.
+BQN's self-hosted compiler and runtime mean that only a small amount of native code is needed to run BQN on any given platform. The [Javascript environment](../docs/bqn.js) requires about 600 lines of Javascript code including system functions and performance improvements; probably around 250 would be required just to run the core language. This makes it fairly easy to port BQN to new platforms, allowing BQN to be [embedded](../doc/embed.md) within other programming languages and interact with arrays or functions in those languages.
+
+There's a short [video introduction](https://www.youtube.com/watch?v=FxU5tZZ1gNc) to the VM architecture thanks to Asher Mancinelli.
 
 The way data is represented is part of the VM implementation: it can use native arrays or a custom data structure, depending on what the language supports. An initial implementation will be very slow, but can be improved by replacing functions from the BQN-based runtime with native code. As the VM system can be hard to work with if you're not familiar with it, I advise you to contact me to discuss implementing a VM if you are interested.
 
@@ -35,7 +37,9 @@ Compilation separates blocks so that they are not nested in bytecode. A block co
 
 When the block is evaluated depends on its type and immediateness. An immediate block (0,1) is evaluated as soon as it is pushed; a function (0,0) is evaluated when called on arguments, an immediate modifier (1 or 2, 1) is evaluated when called on operands, and a deferred modifier (1 or 2, 0) creates a derived function when called on operands and is evaluated when this derived function is called on arguments.
 
-The last property can be a single number, or, if it's a deferred block, might be a pair of lists. For a single number the block is always evaluated by evaluating the body with the given index. For a pair, the first element gives the monadic case and the second the dyadic one. A given valence should begin at the first body in the appropriate list, moving to the next one if a header test (SETH instruction) fails.
+The last property can be a single number or a list of lists. A single number indicates the body to be executed, and is used only for blocks with exactly one body. If it's a list of lists, the length is 1 for a block without arguments and 2 or more for a block with arguments (function or deferred modifier). Each element is a list of body indices. After selecting the appropriate list, execution begins at the first body in the appropriate list, moving to the next one if a header test (SETH or PRED instruction) fails. If a test fails but there's no next body, block evaluation is an error.
+
+The five possible cases for a function are monadic, dyadic, inverse monadic (`𝕊⁼x`), inverse dyadic (`w𝕊⁼x`), and swapped-inverse dyadic (`x𝕊˜⁼w`). The first two will always be provided, while the remaining three typically don't exist as they have to be specified with undo headers. The smallest length that covers all possible cases will be used.
 
 #### Bodies
 
@@ -64,7 +68,7 @@ The following instructions are defined by dzaima/BQN. The ones emitted by the se
 | 08 | RETD |  NS  |  07  |          | Return the running scope's namespace
 | 0B | ARRO |  X   |      | `N`      | Create length-`N` list
 | 0C | ARRM |  X   |  0B  | `N`      | Create length-`N` reference list
-| 0E |      |  X   |      |          | Merge top of stack (for `[]`)
+| 0E |      |      |      |          | Merge top of stack (for `[]`)
 | 10 | FN1C |  X   |      |          | Monadic function call
 | 11 | FN2C |  X   |      |          | Dyadic function call
 | 12 | FN1O |  X   |  10  |          | Monadic call, checking for `·`
@@ -84,6 +88,7 @@ The following instructions are defined by dzaima/BQN. The ones emitted by the se
 | 27 | DYNM |      |      | `I`      | Push named variable `I` reference
 | 2A | PRED |      |  06  |          | Check predicate and drop
 | 2B | VFYM |  X   |      |          | Convert constant to matcher (for headers)
+| 2C | NOTM |  X   |      |          | Push placeholder assignment matcher
 | 2F | SETH |  X   |  30  |          | Test and set header
 | 30 | SETN |  X   |      |          | Define variable
 | 31 | SETU |  X   |      |          | Change variable
@@ -105,7 +110,7 @@ Stack effects for most instructions are given below. Instructions `FN1O`, `FN2O`
 | 0B | ARRO | `x0 … xm → ⟨x0 … xm⟩` | `N` total variables (`m=n-1`)
 | 10 | FN1C | `𝕩 𝕤 → (𝕊 𝕩)`         | 12: `𝕩` may be `·`
 | 11 | FN2C | `𝕩 𝕤 𝕨 → (𝕨 𝕊 𝕩)`     | 13: `𝕨` or `𝕩` may be `·`
-| 14 | TR2D | `g f → (F G)`         |
+| 14 | TR2D | `h g → (G H)`         |
 | 15 | TR3D | `h g f → (F G H)`     | 17: `F` may be `·`
 | 1A | MD1C | `𝕣 𝕗 → (𝔽 _𝕣)`        |
 | 1B | MD2C | `𝕘 𝕣 𝕗 → (𝔽 _𝕣_ 𝔾)`   |
@@ -114,6 +119,7 @@ Stack effects for most instructions are given below. Instructions `FN1O`, `FN2O`
 | 20 | VARO | `→ x`                 | Local variable value
 | 21 | VARM | `→ r`                 | Local variable reference
 | 2B | VFYM | `c → r`               | Constant to match reference
+| 2B | NOTM | `→ r`                 | Constant to not-reference
 | 30 | SETN | `x r → (r←x)`         | `r` is a reference; 2F: no result
 | 31 | SETU | `x r → (r↩x)`         | `r` is a reference
 | 32 | SETM | `x f r → (r F↩ x)`    | `r` is a reference
@@ -145,9 +151,16 @@ The **SETN**, **SETU**, **SETM**, and **SETC** instructions set a value for a re
 
 **SETM** and **SETC** additionally need to get the current value of a reference. For a variable reference this is its current value (with an error if it's not defined yet); for a reference list it's a list of the values of each reference in the list.
 
-### Bodies: SETH VFYM PRED
+| Opcode | Slot must be | Reads value first
+|--------|--------------|------
+| SETN   | Unset        |
+| SETU   | Set          |
+| SETM   | Set          | Yes
+| SETC   | Set          | Yes
 
-**SETH** is a modification of SETN for use in header destructuring. It differs in that it doesn't place its result on the stack (making it more like SETN followed by POPS), and that if the assignment fails because the reference and value don't conform then it moves on to the next eligible body in the block rather than giving an error. **VFYM** converts a BQN value `c` to a special reference: assigning a value `v` to it should check if `v≡c` but do no assignment. Only SETH needs to accept these references, and it should treat non-matching values as failing assignment.
+### Bodies: SETH VFYM NOTM PRED
+
+**SETH** is a modification of SETN for use in header destructuring. It differs in that it doesn't place its result on the stack (making it more like SETN followed by POPS), and that if the assignment fails because the reference and value don't conform then it moves on to the next eligible body in the block rather than giving an error. **VFYM** converts a BQN value `c` to a special reference: assigning a value `v` to it should check if `v≡c` but do no assignment. Only SETH needs to accept these references, and it should treat non-matching values as failing assignment. **NOTM** also creates a special reference, but it takes no inputs and the reference has no effect—it always counts as matching but performs no assignment.
 
 **PRED** drops the top value of the stack, but also checks whether it matches the number 1. If it does match, execution continues; if not, evaluation of the current body ends and evaluation moves to the next eligible body.
 
@@ -177,7 +190,7 @@ The contents of a core runtime are given below. The names given are those used i
 |   3 | `GroupLen` | `≠¨⊔𝕩` for a valid list `𝕩`, with minimum length `𝕨`
 |   4 | `GroupOrd` | `∾⊔𝕩` provided `𝕨` is `l GroupLen 𝕩` (any `l`)
 |   5 | `!`        |
-|   6 | `+`        | On two atoms
+|   6 | `+`        | On one or two atoms
 |   7 | `-`        | On one or two atoms
 |   8 | `×`        | On two atoms
 |   9 | `÷`        | On one or two atoms
@@ -193,6 +206,7 @@ The contents of a core runtime are given below. The names given are those used i
 |  19 | `` ` ``    |
 |  20 | `_fillBy_` | `𝔽` with result fill computed using `𝔾`
 |  21 | `⊘`        |
+|  22 | `⎊`        |
 |   — | `Decompose`| `•Decompose`
 |   — | `PrimInd`  | Index for primitive `𝕩`
 
@@ -219,6 +233,20 @@ GroupLen and GroupOrd, short for Group length and Group order, are used to imple
       r
     }
 
+## Compiler arguments
+
+The compiler takes the source code as `𝕩`. The execution environment is passed as `𝕨`, which can contain up to four values:
+- **Runtime**: list of primitive values; see [previous section](#runtime)
+- **System**: function that takes a list of strings and returns corresponding system values
+- **Variables**: names of existing variables in the scope
+- **Depths**: lexical depth of these variables (default `0`; `¯1` for depth 0 but allowing shadowing)
+
+If `𝕨` has length greater than 4 it's assumed to be the runtime only. If the length is less than 4, empty defaults that don't define any values are used for the missing arguments.
+
+The system-value function is passed a list of unique normalized names, meaning that each name is lowercase and contains no underscores. It should return a corresponding list of system values. Because system values are requested on each program run, a function that has access to context such as `•path` can construct appropriate system values on demand.
+
+The variable list is used to create REPLs, but has other uses as well, such as allowing execution to take place within a surrounding scope. It consists of a list of normalized names. The corresponding depth list indicates the lexical depth of each of these, with 0 and -1 indicating that the variable should exist directly in the top-level scope. A typical interactive REPL uses only the value -1, because it allows variables to be shadowed. It maintains a single top-level environment to be used for all evaluations. When the programmer enters a line, it's compiled, then the environment and list of top-level names is extended according to the result.
+
 ## Assembly
 
 The full BQN implementation is made up of the two components above—virtual machine and core runtime—and the compiled runtime, compiler, and formatter. Since the compiler unlikely to work right away, I suggest initially testing the virtual machine on smaller pieces of code compiled by an existing, working, BQN implementation.
@@ -228,10 +256,11 @@ BQN sources are compiled with [cjs.bqn](../src/cjs.bqn), which runs under [dzaim
 ### Structure
 
 The following steps give a working BQN system, assuming a working VM and core runtime:
-* Evaluate the bytecode `$ src/cjs.bqn r`, passing the core runtime `provide` in the constants array. The result is a BQN list of a full runtime, and a function `SetPrims`.
+* Evaluate the bytecode `$ src/cjs.bqn r`, passing the core runtime `provide` in the constants array. The result is a BQN list of a full runtime, a function `SetPrims`, and a function `SetInv`.
 * Optionally, call `SetPrims` on a two-element list `⟨Decompose, PrimInd⟩`.
+* Optionally, call `SetInv` with a function `𝕩` that updates `Inverse` and (more optionally) a function `𝕨` that updates `SwapInverse`.
 * Evaluate the bytecode `$ src/cjs.bqn c`, which uses primitives from the runtime in its constants array. This is the compiler.
-* Evaluate the bytecode `$ src/cjs.bqn f`. This returns a 1-modifier. To obtain the formatter, call it on a four-element operand list `⟨Type, Decompose, Glyph, FmtNum⟩`.
+* Evaluate the bytecode `$ src/cjs.bqn f`. This returns a function. Then call it on a four-element list `⟨Type, Decompose, Glyph, FmtNum⟩` to obtain the two-element list `⟨•Fmt, •Repr⟩`.
 
 The compiler takes the runtime as `𝕨` and source code as `𝕩`. To evaluate BQN source code, convert it into a BQN string (rank-1 array of characters), pass this string and runtime to the compiler, and evaluate the result as bytecode. Results can be formatted with the formatter for use in a REPL, or used from the implementation language.
 
@@ -239,13 +268,14 @@ Two formatter arguments `Glyph` and `FmtNum` are not part of the runtime. `Glyph
 
 ### Testing
 
-I recommend roughly the following sequence of tests to get everything working smoothly. It can be very difficult to figure out where in a VM things went wrong, so it's important to work methodically and make sure each component is all right before moving to the next.
+I recommend roughly the following sequence of tests to get everything working smoothly. It can be very difficult to figure out where in a VM things went wrong, so it's important to work methodically and make sure each component is all right before moving to the next. In order to run test cases before the compiler runs, I strongly recommend building an automated system to compile the test to bytecode using an existing BQN implementation, and run it with the VM being developed.
 
-Because the compiler works almost entirely with lists of numbers, a correct fill implementation is not needed to run the compiler. Instead, you can define `Fill` as `0⊘⊢` and `_fillBy_` as `{𝔽}` to always use a fill element of 0.
+Because the compiler works almost entirely with lists of numbers, a correct fill implementation is not needed to run the compiler. Instead, you can define `Fill` as `0⊘⊢` and `_fillBy_` as `{𝕘⋄𝔽}` to always use a fill element of 0.
 
-* Test core runtime functions directly by calling them within the implementation language.
 * Test the virtual machine with the output of `src/cjs.bqn` on the primitive-less test expressions in [test/cases/bytecode.bqn](../test/cases/bytecode.bqn).
-* Now test the self-hosted compiler by running it directly on small expressions.
-* For a larger test, use [test/cases/prim.bqn](../test/cases/prim.bqn). The result should be an empty list `⟨⟩` indicating no failed tests.
+* There isn't currently a test suite for provided functions (although [test/cases/simple.bqn](../test/cases/simple.bqn) has some suitable tests for arithmetic): your options are to write tests based on knowledge of these functions and primitive tests, or try to load the runtime and work backwards from any failures. The r1 runtime runs code to initialize some primitive lookup tables so failures are likely.
+* Once the runtime is loaded, begin working through the tests in [test/cases/prim.bqn](../test/cases/prim.bqn) with the full runtime but no self-hosted compiler.
+* After primitive tests pass, try to load the compiler, and run it on a short expression. If it runs, you have a complete (not necessarily correct) system, and remaining tests can be run end-to-end!
 * Now, if you haven't already, add a call to `SetPrims`. Test for inferred properties: identity, under, and undo.
 * If all tests pass you can probably compile the compiler.
+* Headers and namespace support aren't required to support the runtime or compiler, but they can be tested as you add them with the header and namespace tests.

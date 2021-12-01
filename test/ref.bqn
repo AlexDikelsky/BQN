@@ -17,7 +17,7 @@ chrs ← •Import "../src/glyphs.bqn"
 
 def‿keep ← ⊑¨⌾(1⊸⊑) (1=≠)¨⊸⊔ anames
 keep∾↩"⌾⎊"
-pre←"Type←•Type"‿"_amend←{𝕨˙⌾(𝕗⊸⊑)𝕩}"‿"Identity←{𝕏´⟨⟩}"‿"Fill←•FillFn"
+pre←"Type←•Type"‿"_amend←{𝕨˙⌾(𝕗⊸⊑)𝕩}"‿"Identity←{𝕏´⟨⟩}"‿"Fill←⊑∘»1↑⥊"
 
 GetRepls ← {
   ki ← (⊑¨⊑𝕩)∊keep
@@ -27,6 +27,4 @@ GetRepls ← {
 ⟨E_proc⟩ ← chrs‿GetRepls •Import "../src/pp.bqn"
 
 rslt ← "⟨"∾"⟩"«∾","⊸∾¨∾chrs  # Output all primitives
-rt ← •BQN ∾∾⟜(@+10)¨ pre ∾ order∾⟜≠⊸⊏E_proc¨ defs∾<rslt
-⟨DRun,DCompile⟩ ← •Import "../dc.bqn"
-rt⊸DRun
+•BQN ∾∾⟜(@+10)¨ pre ∾ order∾⟜≠⊸⊏E_proc¨ defs∾<rslt

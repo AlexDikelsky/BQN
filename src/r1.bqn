@@ -1,12 +1,13 @@
 # BQN runtime part 1. Requires:
 #   Type Fill Log GroupLen GroupOrd _fillBy_
-#   +-×÷⋆⌊⌈|<>=≠≤≥≢⊢⊣⥊∾↑↓↕⊏⊑!⌜˙˜´`∘○⊸⟜◶⊘⍟
+#   +-×÷⋆⌊⌈|<>=≠≤≥≢⊢⊣⥊∾⋈↑↓↕⊏⊑!⌜˙˜´`∘○⊸⟜◶⊘⍟
 # Filled in by runtime: glyphs and default PrimInd
 # Provides: all BQN primitives
 
 Decompose ← {0‿𝕩}
 PrimInd ← {𝕩}
 SetPrims ← {Decompose‿PrimInd ↩ 𝕩}
+SetInv   ← {{swapInverse 𝕏↩}𝕨 ⋄ inverse 𝕏↩}
 
 IsArray ← 0=Type
 IsAtom  ← 1≤Type
@@ -15,7 +16,6 @@ Nat ← (1=Type)◶⟨0,|∘⌊⊸=⟩
 ToArray ← <⍟IsAtom
 IsSimple ← 1×´IsAtom⌜
 Deshape ← IsArray◶{𝕩Fill⟨𝕩⟩}‿⥊
-Pair ← {⟨𝕩⟩} ⊘ {⟨𝕨,𝕩⟩}
 Cell ← ↓⟜≢
 MatchS ← 1×´=¨
 PermInv ← 1⌜⊸GroupOrd
@@ -26,7 +26,7 @@ _glyphLookup_ ← {
 }
 _isGlyph ← { (glyphs _qSearch 𝕗) = {PrimInd𝕩} }
 IsJoin ← '∾'_isGlyph
-DIsConst ← (4=0⊸⊑)◶0‿('˙'_isGlyph(≠-1˙)⊸⊑)
+DIsConst ← (4=0⊸⊑)◶0‿('˙'_isGlyph 2⊸⊑)
 
 Split2 ← { s←2⊸×⌜↕(≠𝕩)÷2 ⋄ ⟨s⊏𝕩,(1⊸+⌜s)⊏𝕩⟩ }
 _lookup_ ← {
@@ -77,7 +77,7 @@ Cmp1 ← (0<1×´≢∘⊢)◶⟨1, IsArray∘⊢◶(1-2×≤)‿{𝕨Cmp1𝕩}�
 CmpLen ← {
   e←𝕨-○(1×´0⊸<⌜)𝕩
   𝕨(e=0)◶⟨e,0⟩‿{
-    SM←Cmp0 Pair ≥⊑Pair
+    SM←Cmp0 ⋈ ≥⊑⋈
     c‿r←𝕨SM○≠𝕩
     l←𝕨{
       i←0+´×`𝕨=¨𝕩
@@ -325,7 +325,7 @@ Replicate←⟨"/"
   RepInd
 ⟩_multiAxis○ToArray _fillBy_ ⊢
 
-IsPure ← {d←Decompose𝕩 ⋄ 2⊸≤◶⟨≤⟜0, DNotInv◶⟨1,1×´·𝕊⌜1↓⊢⟩d˙⟩0⊑d}
+IsPure ← {d←Decompose𝕩 ⋄ 2⊸≤◶⟨≤⟜0, 1×´·𝕊⌜1↓d˙⟩0⊑d}
 hfils ← {𝕏´{0 Fill 𝕏}‿⊢}⌜(⊢∾{𝕏˜}⌜)⊢‿{𝕎{𝕎⊘𝕏}𝕏}
 HomFil ← "=≠≡≢"_glyphLookup_(1‿1‿2‿3‿0⊏hfils)⊸{𝕎𝕩}
 _fillByPure_←{
@@ -355,17 +355,17 @@ _under_←{
   # Return flat lists ⟨indices,values⟩, or structErr if 𝕨 doesn't capture 𝕩.
   GetInserts←{
     count←1⋄DC←IsArray◶⟨0,1+0⌈´{count+↩¯1+≠d←⥊𝕩⋄DC⌜d}⟩⋄depth←DC𝕩
-    𝕩 (2⌊depth)◶(Pair○Pair)‿(StructConform◶⟨StructErr˙,Pair○⥊⟩)‿{
+    𝕩 (2⌊depth)◶(⋈○⋈)‿(StructConform◶⟨StructErr˙,⋈○⥊⟩)‿{
       Fail←{𝕊‿0}
       # 𝕎 is parent traversal; 𝕩 is current components of ind and val
-      Trav←(IsArray 0⊑⊢)◶⟨Pair, StructConform´∘⊢◶Fail‿{
+      Trav←(IsArray 0⊑⊢)◶⟨⋈, StructConform´∘⊢◶Fail‿{
         Parent←𝕎 ⋄ n←≠0⊑a←⥊⌜𝕩 ⋄ j←¯1
         Child←Trav⟜{𝕩⊸⊑⌜a}
         { j+↩1 ⋄ f←n⊸≤◶⟨𝕊˙⊸Child,Parent˙⟩j ⋄ F 0 }
       }⟩
       next ← 0 Trav 𝕨‿𝕩
       res ← {n‿o←Next𝕩⋄next↩n⋄o}⌜ ↕count
-      (next=fail)◶⟨0⊸⊑⌜ Pair 1⊸⊑⌜, StructErr˙⟩ res
+      (next=fail)◶⟨0⊸⊑⌜ ⋈ 1⊸⊑⌜, StructErr˙⟩ res
     } 𝕨
   }⍟(1-IsStructErr∘⊢)
   Struct←{
@@ -409,7 +409,7 @@ Merge←{
 
 JoinTo←(1<⌈○=)◶(∾○⥊)‿{
   a←1-˜𝕨⌈○=𝕩
-  s←𝕨Pair○≢𝕩
+  s←𝕨⋈○≢𝕩
   "𝕨∾𝕩: Rank of 𝕨 and 𝕩 must differ by at most 1" ! 1×´(a≤≠)⌜s
   c←(≠-a˙)⊸↓⌜s
   "𝕨∾𝕩: Cell shapes of 𝕨 and 𝕩 must match" ! MatchS´c
@@ -419,37 +419,45 @@ JoinTo←(1<⌈○=)◶(∾○⥊)‿{
 
 Join1←{
   # List of lists
+  "∾𝕩: 𝕩 must have an element with rank at least =𝕩" ! 0<0+´=⌜𝕩
   i←j←¯1 ⋄ e←⟨⟩ ⋄ a←𝕩
-  {{e↩a⊑˜i↩𝕩⋄j↩¯1}⍟(1-i⊸=)𝕩⋄(j↩j+1)⊑e}⌜Ind≠⌜𝕩
+  {{e↩Deshape a⊑˜i↩𝕩⋄j↩¯1}⍟(1-i⊸=)𝕩⋄(j↩j+1)⊑e}⌜Ind≠⌜𝕩
 }
 JoinM←{
   # Multidimensional
-  n←≠z←⥊𝕩 ⋄ s←≢⌜z ⋄ d←≠0⊑s ⋄ r←=𝕩
-  "∾𝕩: Elements of 𝕩 must all have the same rank" ! 1×´(d=≠)⌜s
-  "∾𝕩: 𝕩 element rank must be at least argument rank" ! d≥r
+  n←≠z←⥊𝕩 ⋄ s←≢⌜z ⋄ r←=𝕩
   _s0←{s←𝕨⋄F←𝔽⋄{o←s⋄s F↩𝕩⋄o}⌜𝕩}
-  sh←≢𝕩 ⋄ p←1 ⋄ i←j←<0
+  sh←≢𝕩 ⋄ p←1 ⋄ i←j←he←<0
   (Reverse 1×_s0 Reverse sh){
     q←𝕨
     a←𝕩⊑sh
-    m←𝕩⊸⊑⌜s
-    l←m⊏˜q⊸×⌜↕a
-    "∾𝕩: 𝕩 element shapes must be compatible" ! m MatchS ⥊(↕p)⊢⌜l⊣⌜↕q
-    k ← Ind l
+    h←-⟜(1-˜0⌈´rr)⌜rr←=⌜z⊏˜q⊸×⌜↕a
+    "∾𝕩: Incompatible element ranks" ! 1×´0⊸≤⌜h
+    hl←≠ih←q⊸×⌜Ind h
+    sf←s⊏˜⥊((a×q)⊸×⌜↕p)+⌜ih+⌜↕q
+    si←⥊he⊣⌜↕hl×q
+    "∾𝕩: Incompatible element ranks" ! 1×´si<⟜≠¨sf
+    m←si⊑¨sf
+    lf←m⊏˜q⊸×⌜↕hl
+    "∾𝕩: 𝕩 element shapes must be compatible" ! m MatchS ⥊(↕p)⊢⌜lf⊣⌜↕q
+    k ← Ind l←{i←¯1⋄⊢◶1‿{(i+↩𝕩)⊑lf}⌜h}
     c ← (↕≠k)-¨k ⊏ 0+_s0 l
+    he↩ he +⌜ h
     i ↩ (i ×⌜ k⊏l) +¨ i⊢⌜c
     j ↩ j ×⟜a⊸+⌜ k
     p×↩a
   }¨↕r
-  G←(⥊⌜z){𝕨⊑𝕩⊑𝕗}¨
-  i (r<d)◶G‿{
-    t←r↓0⊑s
-    "∾𝕩: 𝕩 element trailing shapes must match" ! 1×´(t MatchS r⊸↓)⌜s
+  d←(=0⊑z)-0⊑he↩⥊he
+  "∾𝕩: 𝕩 element trailing shapes must match" ! he MatchS (=-d˙)⌜z
+  G←(Deshape⌜z){𝕨⊑𝕩⊑𝕗}¨
+  i (0<d)◶G‿{
+    Tr←(≠-d˙)⊸↓⋄t←Tr 0⊑s
+    "∾𝕩: 𝕩 element trailing shapes must match" ! 1×´(t MatchS Tr)⌜s
     ti←t⥊↕tp←×´t⋄(𝕨tp⊸×⊸+⌜ti)G𝕩⊣⌜ti
   } j
 }
 Join←(2⌊=)◶⟨
-  Merge, (1×´(1==)⌜)◶JoinM‿Join1, JoinM
+  Merge, (1×´(1≥=)⌜)◶JoinM‿Join1, JoinM
 ⟩_fillMerge_{
   r←≠𝕨 ⋄ d←≠𝕩
   "∾𝕩: empty 𝕩 fill rank must be at least argument rank" ! d≥r
@@ -563,7 +571,7 @@ ShiftAfter←{
 RangeCheck ← "↕𝕩: 𝕩 must consist of natural numbers"!Nat
 Range ← IsArray◶(↕⊣RangeCheck)‿{
   "↕𝕩: 𝕩 must be a number or list"!1==𝕩 ⋄ RangeCheck⌜𝕩
-  (0⌜𝕩)Fill 0⊸Fill⌜(0<1×´⊢)◶⟨⥊⟜⟨⟩,(<⟨⟩)Pair⊸∾⌜´↕⌜⟩𝕩
+  (0⌜𝕩)Fill 0⊸Fill⌜(0<1×´⊢)◶⟨⥊⟜⟨⟩,(<⟨⟩)⋈⊸∾⌜´↕⌜⟩𝕩
 }
 Windows←{
   "𝕨↕𝕩: 𝕨 must have rank at most 1" ! 1≥=𝕨
@@ -680,7 +688,7 @@ _depthOp_←{
 }
 _rankOp_←{
   Min←<◶⊢‿⊣
-  k←𝕨(Pair○= (0≤⊢)◶⟨Min⟜-,⊣-Min⟩¨ 𝔾_ranks)𝕩
+  k←𝕨(⋈○= (0≤⊢)◶⟨Min⟜-,⊣-Min⟩¨ 𝔾_ranks)𝕩
   Enc←(>⟜0×1+≥⟜=)◶⟨<⊢,EncCell,<⌜_fillBy_<⊢⟩
   Merge ((0⊑k)Enc𝕨) 𝔽_each ((1-˜≠)⊸⊑k)Enc𝕩
 }
@@ -747,7 +755,7 @@ ProgressiveIndexOf ← 0 Fill {
   c←1-˜=𝕨
   "⊒: Rank of 𝕨 must be at least 1" ! 0≤c
   "⊒: Rank of 𝕩 must be at least cell rank of 𝕨" ! c≤=𝕩
-  𝕨⊐○(Pair¨⟜(≢⥊OccurrenceCount∘⥊) 𝕨⊸⊐)𝕩
+  𝕨⊐○(⋈¨⟜(≢⥊OccurrenceCount∘⥊) 𝕨⊸⊐)𝕩
 }
 
 ReorderChk←{
@@ -774,9 +782,6 @@ ReorderAxesInv←{
 }
 
 ⁼ ← {Inverse 𝕗}
-_inv_ ← {𝕘⋄𝕨𝔽𝕩}
-DNotInv ← (5=0⊸⊑)◶1‿(inv˙≢(≠-2˙)⊸⊑)
-_undo ← {𝕗 (≢∧INF˙⊸≢)◶0‿(DNotInv∘Decompose⊢)◶⊢‿{𝕏_inv_(𝕎_invChk_𝕏)} Inverse 𝕗}
 IsConstant ← (3≤Type)◶⟨1 ⋄ DIsConst∘{Decompose𝕩}⊢⟩
 AtopInverse ← {(𝕏𝕎)⊘(𝕏⟜𝕎)}○{Inverse𝕩}
 TrainInverse ← {
@@ -833,7 +838,8 @@ PrimInverse ← INF _lookup_ ⟨
   '⊢', ⊢
   '⊣', ⊢⊘(⊢⊣IX∘≡)
   '∾', IA∘0 ⊘ {d←𝕩-○=𝕨⋄IX(0⊸≤∧≤⟜1)d⋄l←d◶1‿≠𝕨⋄IX l≤≠𝕩⋄IX 𝕨≡d◶⟨⊏,l⊸↑⟩𝕩⋄l↓𝕩}
-  '≍', {IX 1=≠𝕩⋄⊏𝕩} ⊘ {IX 2=≠𝕩⋄IX 𝕨≡⊏𝕩⋄1⊏𝕩}
+  '≍', {IX  1 =≠𝕩⋄ ⊏𝕩} ⊘ {IX  2 =≠𝕩⋄IX 𝕨≡ ⊏𝕩⋄1⊏𝕩}
+  '⋈', {IX ⟨1⟩≡≢𝕩⋄0⊑𝕩} ⊘ {IX ⟨2⟩≡≢𝕩⋄IX 𝕨≡0⊑𝕩⋄1⊑𝕩}
   '↑', ¯1⊸⊑_invChk_↑ ⊘ (IA∘0)
   '↓',  0⊸⊑_invChk_↓ ⊘ (IA∘0)
   '↕', ≢_invChk_↕ ⊘ (IA∘0)  # Should trace edge and invChk
@@ -855,8 +861,10 @@ SwapInverse ← INF _lookup_ ⟨
 ⟩
 ⌜ ↩ _table
 ¨ ↩ _each
+CheckInv ← (4=0⊸⊑)◶⟨"+-÷⋆√¬"_glyphLookup_(6=↕7)1⊸⊑,¬·'⁼'_isGlyph 2⊸⊑⟩Decompose
 Mod1Inverse ← INF˙ _lookup_ ⟨
-  '˜', SwapInverse
+  '⁼', {𝕏_invChk_(𝕏{i←Inverse𝕗⋄𝕨I𝕩})}⍟CheckInv
+  '˜', {SwapInverse𝕩}
   '¨', {𝕏⁼¨                     ⊣·IX 0<≡∘⊢}
   '⌜', {𝕏⁼⌜⊘(IA∘0)              ⊣·IX 0<≡∘⊢}
   '˘', {(IX∘IsArray⊸⊢𝕏⁼)˘       ⊣·IX 0<=∘⊢}
@@ -872,18 +880,19 @@ Mod2Inverse ← INF˙ _lookup_ ⟨
   '⊘', {(𝕎⁼)⊘(𝕏⁼)}
   '⊸', IsConstant∘⊣ ⊣◶{INF⊘𝕏}‿⊢ {𝕎⊸(𝕏⁼)}
   '⟜', {(𝕨IsConstant∘⊢◶⟨IA∘0˙,{𝕩𝕎{SwapInverse𝕗}⊢}⟩𝕩)⊘(𝕏⁼𝕎⁼)}
-⟩ { inv˙⊸=◶⟨𝔽,{𝕏_inv_𝕎}˙⟩ }
+⟩
 
 ´ ← _fold
 ˝ ← _insert
-⁼ ↩ _undo
+⁼ ↩ {i←Inverse𝕗⋄𝕨I𝕩}
 ˘ ← _cells
 ⊑ ↩ First          ⊘ Pick
 ◶ ↩ {𝕨((𝕨𝔽𝕩)⊑𝕘){𝔽}𝕩}  # Same definition, new Pick
 ⚇ ← _depthOp_
 ⎉ ← _rankOp_
 ⥊ ↩ Deshape        ⊘ Reshape
-≍ ← >∘Pair _fillBy_ (⊢⊘IF)
+≍ ← >∘⋈ _fillBy_ (⊢⊘IF)
+⋈ ↩ {𝕩Fill⟨𝕩⟩}     ⊘ (⋈○⊑ _fillBy_ IF○<)
 ⍉ ← Transpose      ⊘ ReorderAxes
 ⊒ ← OccurrenceCount⊘ ProgressiveIndexOf
 ⍷ ← ∊⊸/            ⊘ Find

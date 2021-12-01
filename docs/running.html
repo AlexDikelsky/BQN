@@ -5,7 +5,7 @@
 </head>
 <div class="nav">(<a href="https://github.com/mlochbaum/BQN">github</a>) / <a href="index.html">BQN</a></div>
 <h1 id="how-to-run-bqn"><a class="header" href="#how-to-run-bqn">How to run BQN</a></h1>
-<p><a href="https://github.com/dzaima/CBQN">CBQN</a> is now the primary offline implementation. However, dzaima/BQN still works, and is used for some testing. Scripts in this repository use <code><span class='Value'>bqn</span></code> in the <code><span class='Comment'>#!</span></code> line if any BQN can run them, and <code><span class='Value'>dbqn</span></code> if only dzaima/BQN works.</p>
+<p><a href="https://github.com/dzaima/CBQN">CBQN</a> is now the primary offline implementation, and can be used everywhere in this repository, except test/dzaima which is specifically for testing with dzaima/BQN. Scripts start with <code><span class='Comment'>#! /usr/bin/env bqn</span></code> in order to look up the user's <code><span class='Value'>bqn</span></code> executable.</p>
 <p>For Nix users, nixpkgs now has repositories for several implementations; <code><span class='Value'>cbqn</span></code> is recommended for general use.</p>
 <h3 id="self-hosted-bqn"><a class="header" href="#self-hosted-bqn">Self-hosted BQN</a></h3>
 <p>See the subsections below for instructions on specific implementations.</p>
@@ -13,8 +13,9 @@
 <p>Support in the following languages has been implemented:</p>
 <ul>
 <li>Javascript, in this repository. Slow (compiles at ~5kB/s) but usable.</li>
-<li><a href="https://github.com/dzaima/CBQN">C</a>, targetting high performance. Some parts are fast, some are not.</li>
-<li>dzaima/BQN (<a href="https://github.com/mlochbaum/BQN/blob/master/bqn.bqn">bqn.bqn</a>), mainly for testing.</li>
+<li><a href="https://github.com/dzaima/CBQN">C</a>, targetting high performance. Many parts are fast, some are not.</li>
+<li><a href="https://github.com/ashermancinelli/cxbqn">C++</a>, planning to enable GPU use. It works but is still early-stage.</li>
+<li>BQN (<a href="https://github.com/mlochbaum/BQN/blob/master/bqn.bqn">bqn.bqn</a>), for testing the compiler easily.</li>
 <li><a href="https://github.com/cannadayr/ebqn">Erlang</a>, intended for embedding. Too slow to be practical; a <a href="https://github.com/cannadayr/ebqn-rs/">Rust version</a> is in progress to fix this.</li>
 </ul>
 <h4 id="javascript"><a class="header" href="#javascript">Javascript</a></h4>
@@ -31,7 +32,5 @@
 <span class='Value'>java</span> <span class='Function'>-</span><span class='Value'>jar</span> <span class='Function'>/</span><span class='Value'>path</span><span class='Function'>/</span><span class='Value'>to</span><span class='Function'>/</span><span class='Value'>dzaima</span><span class='Function'>/BQN/BQN</span><span class='Value'>.jar</span> <span class='String'>&quot;$@&quot;</span>
 </pre>
 <p>If compiled with Native Image, <code><span class='Value'>nBQN</span></code> can be used directly instead.</p>
-<h4 id="dzaimareference-bqn"><a class="header" href="#dzaimareference-bqn">dzaima+reference BQN</a></h4>
-<p>This repository contains a dzaima/BQN script <code><span class='Value'>dzref</span></code> that fills in gaps in primitive support with BQN implementations. It was used for md.bqn for a while and is no longer used now. The command-line arguments are a script to run and followed by the <code><span class='Value'>•args</span></code> to supply to it.</p>
 <h3 id="bqn2ngn"><a class="header" href="#bqn2ngn">BQN2NGN</a></h3>
 <p><a href="https://github.com/mlochbaum/BQN2NGN">BQN2NGN</a> is a prototype implementation in Javascript build to experiment with the langauge, which is now abandoned.</p>

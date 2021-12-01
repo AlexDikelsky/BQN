@@ -2,9 +2,9 @@
 
 # Arithmetic functions
 
-BQN's arithmetic functions use mostly the same symbols as APL, and the functionality is actually defined by the language implementation's number system and not the specification, so there's not too much to say about them.
+Since BQN's function syntax was designed to mirror mathematical operators, its arithmetic tends to look a lot like mathematical notation. Individual functions are listed below. As an array language, BQN applies arithmetic element-wise to arrays, a system known as [pervasion](#pervasion). A distinctive feature of BQN is its [character arithmetic](#character-arithmetic), which allows `+` and `-` to manipulate characters without explicitly transforming them to numbers.
 
-Summary of differences for APLers:
+Summary of other differences from APL:
 - Exponentiation is represented with the star character `⋆`, since asterisk `*` is rendered inconsistently across fonts and sometimes appears as a superscript.
 - There's a root function `√`.
 - Not uses a different symbol `¬`, and binary logical functions `∧∨` (described on [their own page](logic.md)) are extended linearly in all arguments instead of using GCD or LCM.
@@ -81,14 +81,14 @@ lg ← "g"At"stroke=currentColor|stroke-width=0.6|opacity=0.5"
 
 Text ← ("text" Attr "dy"‿"0.35em"∾Pos)⊸Enc
 types ← "Number"‿"Character"
-t ← ((1-˜0.65⌊↕3)(0.25⊸+⊸≍¨≍○<≍˜¨)1∾0.5+↕2) (Text¨⟜(<∾types˙))¨ "𝕨"‿"𝕩"
+t ← ((1-˜0.65⌊↕3)(0.25⊸+⊸≍¨⋈≍˜¨)1∾0.5+↕2) (Text¨⟜(<∾types˙))¨ "𝕨"‿"𝕩"
 
 ((-p+d×0.1‿0.3)∾dim) SVG ⟨
   "rect" Elt rc ∾ (Pos 0‿0)∾"width"‿"height"≍˘FmtNum 2×d
   ("rect" Elt hc ∾ ("width"‿"height"≍˘FmtNum d×¬2×hp)∾˜Pos∘+⟜hp)∘≍¨⟜⌽ ↕2
-  tg Enc "end"‿"middle" ("g"Attr"text-anchor"≍○<⊢)⊸Enc¨ t
+  tg Enc "end"‿"middle" ("g"Attr"text-anchor"⋈⊢)⊸Enc¨ t
   cg Enc (⥊≍⌜˜0.5+↕2) Text¨ 2‿1‿1 / Highlight¨ "+ -"‿"+  "‿"  -"
-  lg Enc (<"xy"≍⌜"12") ("line" Elt ≍˘○⥊)⟜(FmtNum d×⊢)¨ ≍○<⟜⌽ 1‿1≍¯0.5‿2.2
+  lg Enc (<"xy"≍⌜"12") ("line" Elt ≍˘○⥊)⟜(FmtNum d×⊢)¨ ⋈⟜⌽ 1‿1≍¯0.5‿2.2
 ⟩
 -->
 
@@ -130,7 +130,7 @@ Minimum (`⌊`) returns the larger of its two arguments, and Maximum (`⌈`) ret
 
         ⌽⊸⌈ ↕8
 
-Modulus (`|`) is similar to the modular division operation written `%` in C-like languages, but differs in its handling of negative arguments. It's defined to be `{𝕩-𝕨×⌊𝕩÷𝕨}`, except that the multiplication should always return 0 if its right argument is 0, even if `𝕨` is infinite.
+Modulus (`|`) is similar to the modular division operation written `%` in C-like languages, but it takes the arguments in the opposite order, and differs in its handling of negative arguments. It's defined to be `{𝕩-𝕨×⌊𝕩÷𝕨}`, except that the multiplication should always return 0 if its right argument is 0, even if `𝕨` is infinite.
 
         3 | ↕8
 

@@ -19,15 +19,15 @@ repl ← "div:cont" E ⟨
   ⟩
   "pre:rslt" E """B Q N"""
 ⟩
-repl ∾< ∾(""Enc˜"script"Attr"src"≍○<∾⟜".js")¨"bqn"‿"repl"
+repl ∾< ∾(""Enc˜"script"Attr"src"⋈∾⟜".js")¨"bqn"‿"repl"
 -->
 
 Want to learn and use a modern, powerful language centered on Ken Iverson's array programming paradigm? BQN **now provides**:
 
 - A simple, consistent, and [stable](commentary/stability.md) array programming language
-- Documentation with examples, visuals, explanations, and rationale for features
+- A low-dependency C implementation using bytecode compilation: [installation](running.md)
 - Basic [system functions](spec/system.md) for common math, file, and IO operations
-- A low-dependency C implementation using bytecode compilation
+- Documentation with examples, visuals, explanations, and rationale for features
 
 BQN **will provide**:
 

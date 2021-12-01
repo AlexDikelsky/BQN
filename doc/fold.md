@@ -15,13 +15,13 @@ bg ← "class=bluegreen|stroke-width=3|style=fill:none|opacity=0.7"
 lg ← "class=lilac|stroke-width=2"
 
 Text ← ("text" Attr "dy"‿"0.32em"∾ ·Pos d⊸×)⊸Enc
-Path ← "path" Elt "d"≍○<⊢
+Path ← "path" Elt "d"⋈⊢
 Line ← "line" Elt (⍉"xy"≍⌜"12")≍˘○⥊ ·FmtNum ·d⊸×˘⊢
 
 Brak ← {
   l ← 6‿15
   P ← ∾"M l l "∾¨ ·FmtNum∘⥊ ∾
-  Path ∾ (((-⊸≍0.4)+0‿¯1⊏𝕨)((0‿¯1×l)+d×≍)⌜𝕩) P¨ ≍○<⟜⌽ -⌾⊑⊸≍l
+  Path ∾ (((-⊸≍0.4)+0‿¯1⊏𝕨)((0‿¯1×l)+d×≍)⌜𝕩) P¨ ⋈⟜⌽ -⌾⊑⊸≍l
 }
 
 _pair ← {1(↓𝔽-⊸↓)⊢}
@@ -39,7 +39,7 @@ lp ← 0.35
     ((lp×¯0.5‿1≍1.2‿¯0.5)+≍)¨_pair sp
     ⟨sx {⍉(≍˜𝕨)≍(≍⟜-lp)+𝕩≍1⊑ty}○⊑ sy⟩
   ⟩
-  "text-anchor=end" Ge (¯1.1≍¨ty) Text¨ ≍○<⟜(ft∾(Highlight"´")∾⊢) "𝕩"
+  "text-anchor=end" Ge (¯1.1≍¨ty) Text¨ ⋈⟜(ft∾(Highlight"´")∾⊢) "𝕩"
   (tp∾<(⊑sx)≍1⊑ty) Text¨ xt∾⊏zt
   sp Text¨ (¯1↓xt) ∾⟜ft⊸∾¨ 1↓zt
   bg Ge tx Brak ⊑ty
@@ -96,15 +96,15 @@ The full list of identity values Fold has to use is shown below.
 
 The functions we've shown so far are associative (ignoring floating point imprecision), meaning it's equally valid to combine elements of the argument list in any order. But it can be useful to fold using a non-associative function. In this case you must know that Fold performs a *right fold*, starting from the end of the array and working towards the beginning.
 
-        ≍○<´ "abcd"
+        ⋈´ "abcd"
 
-        'a' ≍○< 'b' ≍○< 'c' ≍○< 'd'  # Expanded form
+        'a' ⋈ 'b' ⋈ 'c' ⋈ 'd'  # Expanded form
 
-Using the [pair](couple.md#coupling-units) function `≍○<` as an operand shows the structure nicely. This fold first pairs the final two characters `'c'` and `'d'`, then pairs `'b'` with that and so on. This matches BQN's right-to-left order of evaluation. More declaratively we might say that each character is paired with the result of folding over everything to its right.
+Using [Pair](pair.md) (`⋈`) as an operand shows the structure nicely. This fold first pairs the final two characters `'c'` and `'d'`, then pairs `'b'` with that and so on. This matches BQN's right-to-left order of evaluation. More declaratively we might say that each character is paired with the result of folding over everything to its right.
 
 BQN doesn't provide a left Fold (`` ` `` is [Scan](scan.md)). However, you can fold from the left by [reversing](reverse.md#reverse) (`⌽`) the argument list and also reversing (`˜`) the operand function's argument order.
 
-        ≍○<˜´ ⌽ "abcd"
+        ⋈˜´ ⌽ "abcd"
 
 One consequence of this ordering is that folding with Minus (`-`) gives an alternating sum, where the first value is added, the second subtracted, the third added, and so on. Similarly, `÷` gives an alternating product, with some elements multiplied and some divided.
 
@@ -159,7 +159,7 @@ A function with Insert `𝔽˝` is nearly equivalent to `𝔽´<˘` (and both fa
 
 Just like Fold, Insert allows an initial element for the left argument, so that you don't need to rely on the interpreter knowing the identity. A more complete translation into Fold is therefore `{𝕨𝔽´<˘𝕩}`. The expression below shows that the operand function is called on the last major cell when the identity, then the next-to-last major cell and so on. In total there are `≠𝕩` calls, while there would be `1-˜≠𝕩` without the left argument.
 
-        "id" ≍○<˝ "row0 "∾"row1 "≍"row2 "
+        "id" ⋈˝ "row0 "∾"row1 "≍"row2 "
 
 One trick involving Insert is `∾˝`, which merges the first two axes of `𝕩` into one long axis. It even works on empty arrays, because BQN knows that there's only one result shape that makes sense (in contrast to `∾´⟨⟩`, where many results sometimes work but none of them always work).
 

@@ -50,7 +50,7 @@ Circ ← {
   tr ← ("translate"Fn p) ∾ 0⊸≠◶⟨"","rotate"⊸Fn⟩t
   tp ← "textPath"Attr∘‿2⥊⟨"href","#"∾id,"startOffset","%"∾˜FmtNum 25+6×l⟩
   Ell  ← ∾"maa"∾⟜Fmt¨0⌾(¯1⊸⊑)⊸{⟨-𝕨⟩∾(𝕩∾0‿1∾¬o)⊸∾¨2‿¯2×<𝕨}
-  Path ← "path" Elt ∾⟜("d"≍○<Ell∘+⟜r)
+  Path ← "path" Elt ∾⟜("d"⋈Ell∘+⟜r)
   ("g"Attr"transform"‿tr≍"class"‿c) Enc ⟨
     el Path 0
     (∘‿2⥊⟨"style","display:none","id",id⟩) Path 9
@@ -73,7 +73,7 @@ To ← {
 }
 
 0‿0‿512‿512 SVG gr Enc ∾⟨
-  ⥊<("text"Attr"font-size"‿"24"∾Pos 256‿38) Enc """Functional programming"""
+  ⋈("text"Attr"font-size"‿"24"∾Pos 256‿38) Enc """Functional programming"""
   ('0'+↕∘≠)⊸(Circ¨) cat
   Enc˜⟜("text" Attr ·Pos 10⊸×)´¨ pl
   ∾To¨ arr

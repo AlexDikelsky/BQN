@@ -2,7 +2,7 @@
 
 # Transpose
 
-Transpose (`⍉`) is a tool for rearranging the axes of an array. BQN's version is tweaked relative to APL to align better with the leading axis model and make common operations easier.
+Transpose (`⍉`) is a tool for rearranging the axes of an array `𝕩`. Without a left argument, it moves the first axis to the end, while a left argument can specify an arbitrary rearrangement. Both cases are tweaked relative to APL to align better with the [leading axis](leading.md) model and make common operations easier.
 
 ## Transpose basics
 
@@ -31,11 +31,11 @@ BQN's transpose takes the first axis of `𝕩` and moves it to the end.
 In terms of the argument data as given by [Deshape](reshape.md#deshape) (`⥊`), this looks like a simple 2-dimensional transpose: one axis is exchanged with a compound axis made up of the other axes. Here we transpose a rank 3 matrix:
 
         a322 ← 3‿2‿2⥊↕12
-        ≍○<⟜⍉ a322
+        ⋈⟜⍉ a322
 
 But, ignoring the whitespace and going in reading order, the argument and result have exactly the same element ordering as for the rank 2 matrix `⥊˘ a322`:
 
-        ≍○<⟜⍉ ⥊˘ a322
+        ⋈⟜⍉ ⥊˘ a322
 
 To exchange multiple axes, use the [Repeat](repeat.md) modifier. A negative power moves axes in the other direction, just like how [Rotate](reverse.md#rotate) handles negative left arguments. In particular, to move the last axis to the front, use [Undo](undo.md) (as you might expect, this exactly inverts `⍉`).
 
@@ -77,7 +77,7 @@ Since this kind of rearrangement can be counterintuitive, it's often easier to u
 
         ≢ 1‿3‿2‿0‿4 ⍉⁼ a23456
 
-So far, all like APL. BQN makes one little extension, which is to allow only some axes to be specified. Then `𝕨` will be matched up with [leading axes](leading.md) of `𝕩`. Those axes are moved according to `𝕨`, and remaining axes are placed in order into the gaps between them.
+BQN makes one further extension, which is to allow only some axes to be specified (this is the only difference in dyadic `⍉` relative to APL). Then `𝕨` will be matched up with [leading axes](leading.md) of `𝕩`. Those axes are moved according to `𝕨`, and remaining axes are placed in order into the gaps between them.
 
         ≢ 0‿2‿4 ⍉ a23456
 

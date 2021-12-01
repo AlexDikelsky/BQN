@@ -1,6 +1,6 @@
 func‿mod1‿mod2 ← •args
 lf←@+10
-charSet‿cgl←(∾ ≍○< ≠¨)⟨
+charSet‿cgl←(∾ ⋈ ≠¨)⟨
   func                  # Function
   mod1                  # 1-modifier
   mod2                  # 2-modifier
@@ -18,10 +18,11 @@ charSet‿cgl←(∾ ≍○< ≠¨)⟨
   "•"∾(¯1↓"𝕨")∾" "∾@+9  # Whitespace (or special name prefix in UTF-16)
   "#'""@"               # Preprocessed characters
 ⟩
-bF‿b1‿b2‿bS‿bH‿bG‿bB‿bL‿bO‿bX‿bN‿bD‿bA‿bW‿bP←≍¨˜⟜(0»+`)cgl
+bF‿b1‿b2‿bS‿bH‿bG‿bB‿bL‿bO‿bX‿bN‿bD‿bA‿bW‿bP←⋈¨˜⟜(0»+`)cgl
 M←1⊸⊑(0⊸≤∧>)-⟜⊑   # ∊ for an init,length pair 𝕩 as above
 sep←⊑bS
-bI←bX+≍⟜-5⋄bR←8+⊑bX
+pred←2+⊑bH
+bI←bX+⋈⟜-5⋄bR←8+⊑bX
 Pl←∾⟜("s"/˜1<≠)   # Pluralize
 _tmpl←{∾𝕗{𝕎𝕩}¨<𝕩} # Template
 # Convert characters to numbers, mostly the same as tokens
@@ -60,7 +61,7 @@ Tokenize←{System‿vars←𝕨
   is-↩is(-×⊏⟜c)ie                           # Comment → ending newline only
   t←CharCode ie⊏𝕩
   nd←(t=⊑bN)>«t M bD⋄rr←t=bR                # Namespace dot; 𝕣
-  w←»⊸<l←rr∨nd<t M bN(⊣≍-˜)○⊑bW             # Word chars l, start w
+  w←»⊸<l←rr∨nd<t M bN(⊣⋈-˜)○⊑bW             # Word chars l, start w
   us←t=¯1++´bA⋄sy←t=⊑bW                     # Underscore, system dot
   {!⟨/us∧w+`⊸⊏0∾𝕩,"Words can't only have underscores"⟩}⍟(∨´)w(/<1(⊢/«)(∨/⊣))l>us
   wk←(¬w/rr)×na⌊∘÷˜(⊑bA)-˜w/t               # Kind of word from first char
@@ -89,9 +90,9 @@ Tokenize←{System‿vars←𝕨
   p←≠`1¨sb←¯1↓1↓/1(∾≠∾˜)t=sep               # Separator group boundaries (excludes leading and trailing)
   sk←sb/˜p>∨⟜«(M⟜bH∨(3‿5+⊑bB)∊˜p⊸+)(sb-p)⊏t # Keep the first of each group that's not just inside a bracket
   t{is/˜↩𝕨⋄ie/˜↩𝕨⋄𝕨/𝕩}˜↩1¨⌾(sk⊸⊏)t≠sep      # Remove the rest
-  im←(t=bR)∨t M vd≍+´2↑kk                   # Identifier (or 𝕣) mask
+  im←(t=bR)∨t M vd⋈+´2↑kk                   # Identifier (or 𝕣) mask
   r←ir⌾(im⊸/)(vd⌊t)⊏charRole∾0              # Role
-  t+↩(⊑bX)((⊢M≍⟜5)×5+3⊸+⊸≤)t                # Case-insensitive special names
+  t+↩(⊑bX)((⊢M⋈⟜5)×5+3⊸+⊸≤)t                # Case-insensitive special names
   t-↩vi(<+10×=)t                            # Shift . to bX and variables back one
   ⟨t,r,k,is,ie⟩
 }
@@ -99,7 +100,7 @@ Tokenize←{System‿vars←𝕨
 # 𝕩 is a list of tokens that contains the numeric literals, each
 # preceded by 0. Return the numbers.
 ReadNums←{
-  _err_←{(!/⟜𝔾≍○<𝔽)⍟(∨´)}
+  _err_←{(!/⟜𝔾⋈𝔽)⍟(∨´)}
   EChars←⟨"Letter"⊸Pl," """,⊏⟜charSet,""" not allowed in numbers"⟩_tmpl
   e‿d‿n‿p‿i←=⟜𝕩¨((⊑bA)+-´"ea")∾+⟜↕´bN       # Masks for e.¯π∞
   EChars∘(/⟜𝕩)_err_𝕨 (𝕩=bR)∨¬e∨𝕩<⊑bA
@@ -126,7 +127,7 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
     Msg ← >○≠◶⟨"opening"_mis_ 0, "closing"_mis_ 1˜⟩
     ! 𝕨 (Lcs<⌊○≠)◶⟨Msg,"Malformed bracket nesting"⟩ 𝕩
   }
-  _err_←{(!(∧∘⍉(i≍e˙)⊏⎉1˜/⟜𝔾)≍○<𝔽)⍟(∨´⍟=)}
+  _err_←{(!(∧∘⍉(i≍e˙)⊏⎉1˜/⟜𝔾)⋈𝔽)⍟(∨´⍟=)}
 
   # Bracket and ligature validation and handling
   # Open brackets have role ¯1 and closed ones have role 0
@@ -134,18 +135,18 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   g←⍋pd←+`p←(¯1-2×r)×𝕩 M bB⋄gb←g⊏r=¯1       # Paren (actually any bracket type) depth and grade
   (g⊏p)(>⟜0⊸/ErrMismatchedBrackets⍟≢1-˜<⟜0⊸/)gx←g⊏𝕩
   "Swapped open and closed brackets" ! 0≤(⊑g)⊑pd
-  "Parentheses can't contain separators"_err_(gb/G) ((⊑bB)⊸=»⊸∧(2+⊑bH)⊸=∨sep⊸=)gbx←gb/gx
-  "Predicates can't be placed inside lists"_err_((sep≠GBX)/gb/G) ((4+⊑bB)⊸=»⊸∧(2+⊑bH)⊸=)sep⊸≠⊸/gbx
+  "Parentheses can't contain separators"_err_(gb/G) ((⊑bB)⊸=»⊸∧pred⊸=∨sep⊸=)gbx←gb/gx
+  "Predicates can't be placed inside lists"_err_((sep≠GBX)/gb/G) ((4+⊑bB)⊸=»⊸∧pred⊸=)sep⊸≠⊸/gbx
   {"Empty statement or expression"_err_(𝕩/0∾G) (4+⊑bB)≠𝕩/0∾gx}1⊸«⊸∧1∾gb
   dl←«⊸∨dc←r=4                              # Dot left
   r-↩(𝕩=⊑bG)>ec←«dc<0≤r+p                   # Role ¯4 for exports: ⊑bG is ⇐
-  "Invalid assignment or stranding use"_err_(↕∘≠) ((¯4⊸<∧≤⟜¯2)r)>(ec∨𝕩=2+⊑bG)∧»dc<0≤r
-  "Dot must be followed by a name"_err_(↕∘≠) dc>«𝕩 M vi‿nv
+  "Invalid assignment or stranding use"_err_(↕≠) ((¯4⊸<∧≤⟜¯2)r)>(ec∨𝕩=2+⊑bG)∧»dc<0≤r
+  "Can't use export statement as predicate"_err_(↕≠) (»¯4=r)∧𝕩=pred
+  "Dot must be followed by a name"_err_(↕≠) dc>«𝕩 M vi‿nv
   sr←»⌾(((⍋⊏⟜dl)⊸⊏g)⊸⊏)sl←«⊸∨r=¯2⋄ns←¬sl∨sr # Strand right and left; not stranded
   cp←𝕩=1+⊑bB                                # Closed paren
   nr←(IT¬cp)⊏(𝕩=2+⊑bI)+2×𝕩=⊑bO              # Nothingness role: 1 for 𝕨, 2 for ·
   nx←0 ⋄ nei←↕≠nr ⋄ _nerr←{𝕗 _err_ nei 2=nx⌈↩𝕩}
-  "Can't strand Nothing (·)"_nerr nr×¬ns
   g⊏˜↩⍋g⊏sdl←sl∨dl                          # Avoid reordering strands and dots in rev
   rp←≠⊸»⌾(g⊸⊏)↕≠r                           # Position of previous, for roles
   # Permutation to reverse each expression: *more* complicated than it looks
@@ -162,8 +163,8 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   g⊏˜↩gs←⍋gr⊏sl⋄gr↩g⊏rev⋄gi←⍋g              # Send strand prefixes *‿ to the end
 
   # Headers
-  hh←𝕩=⊑bH⋄cs←𝕩=1+⊑bH⋄qm←𝕩=2+⊑bH            # Case header : and separator ; and predicate ?
-  "Punctuation : ; ? not allowed outside blocks"_err_(↕∘≠) (∨`b)<hh∨cs∨qm
+  hh←𝕩=⊑bH⋄cs←𝕩=1+⊑bH⋄qm←𝕩=pred             # Case header : and separator ; and predicate ?
+  "Punctuation : ; ? not allowed outside blocks"_err_(↕≠) (∨`b)<hh∨cs∨qm
   fi←+`cb←b∨cs⋄H←cb¬∘PN⊢                    # Body index fi; which bodies Have a property
   cq←(H qm)∨ch←H hh                         # ch: body has : header ; cq: or ? predicate
   cf←1∾¬co←cb/cs⋄cm←0∾∨⟜«co                 # cf: body is first; cm: body is one of multiple
@@ -178,7 +179,7 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   hl←2=hn←(1⊸»+«)hc←¯1=hr                   # hl: is label, hc: is :
   "Only one header per body allowed"_err_(hc/HI) (1+hc/hi)⊏hf
   ho←(»∨·«(hr=3)∧⊢)hl<hy←2≤hr               # Header operands
-  "Missing operand in header"_err_(HI) ho∧hc∨hy
+  "Missing operand in header"_err_(HI) (ut∧hr=3)∨ho∧hc∨hy
   hm←¬ho∨ha←ho<(0=hr)∧1=hn                  # Mask for main name; header arguments
   "Invalid header structure"_err_(hm/HI) 1⊸»⊸=hm/hc
   hk←3|1-˜(+`bI∾nv)⍋ht←hi⊏𝕩×¬rev⊏sr         # Kind: 0 special, 1 name, 2 compound
@@ -187,25 +188,27 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   "Incorrect special name"_err_(HI) (0=hk)∧ht≠hv+⊑bI
   hk×↩¬hc∨hl∧0=hr                           # Treat subject labels like special names
   hm>↩hc⋄hr/˜↩hm⋄hx←(1»hc)/ha               # Header-derived role hr and immediacy ¬hx
+  ut-↩-⟜»ut×ho                              # Shift ⁼ from right operand to main name
   "Invalid Undo header syntax"_err_(HI) hm<×ut
   "Header left argument without right"_err_(HI) ha>hc+`⊸⊏hx∾0
   "Header operation must be a plain name"_err_(HI) hma>hk≠2
-  ut/˜↩hm
-  cwh←(2×2=ut)⌈hc/»hl⌈ha×1+he←0≠hk
-  cw←cwh⌾(ch⊸/)1+-⟜«(»cq)<1(⊢<«)cf          # Body 𝕨: 0 no, 1 allowed, 2 required
-  hl/˜↩hm
-  hx∨↩1=hr⋄hu←(¬he)⌾(hi⊸⊏)hf
-  hj←gi⊏˜he/hi⋄hd←2=he/hk
+  ut/˜↩hm⋄hx∨↩1=hr
+  "Header with ⁼ must take arguments"_err_(hm/HI) hx<×ut
+  cwh←hc/»hl⌈ha×1+he←0≠hk                   # Body 𝕨 for just headers
+  "Header with ˜⁼ must have left argument"_err_(HI) (0=cwh)∧ut2←2=ut
+  cw←(cwh⌈2×ut2)⌾(ch⊸/)1+-⟜«(»cq)<1(⊢<«)cf  # Body 𝕨: 0 no, 1 allowed, 2 required
+  hl/˜↩hm⋄hu←(¬he)⌾(hi⊸⊏)hf                 # hu: mask of header special names
+  hj←gi⊏˜he/hi⋄hd←2=he/hk                   # hj: header assignments; hd: which ones destructure
 
   # Block properties
-  ss←((rev⊏r=3)∧𝕩=3+⊑bI)+(0‿3‿5‿6+⊑bI)⍋𝕩    # Special name (treat _𝕣_ as 4)
-  HS←(¯1+`cf)⊏b¬∘PN=⟜ss⋄sp←/hf<𝕩 M bI       # Has-special (𝕤𝕩𝕨/𝕣𝕗/𝕘); indices of specials
+  ss←0‿3‿5‿6⍋(⊢+(0<hk)×hv⊸-)⌾(hi⊸⊏)𝕩-⊑bI    # Special name
+  ss+↩(rev⊏r=3)∧𝕩=3+⊑bI                     # Treat _𝕣_ as 3, like 𝕘
+  HS←(¯1+`cf)⊏b¬∘PN=⟜ss⋄sp←/hu<𝕩 M bI       # Has-special (𝕤𝕩𝕨/𝕣𝕗/𝕘); indices of specials
   fx←HS 1⋄fr←(fx∨0⊸<)⊸+ft←2(⊣⌈2×⊢)○HS 3     # Body immediacy ¬fx, type ft, role fr
-  "Block header conflicts with special names"_err_(ch/0∾/∘CB) (hr<ch/fr)∨hl<hx<ch/fx
+  "Block header type conflict"_err_(ch/0∾/∘CB) (hr<ch/fr)∨hl<hx<ch/fx
   ft⌈↩1-˜fr↩hr⌾(ch⊸/)fr⋄fx↩hx⊸⌈⌾(ch⊸/)fx
   "Special name outside of any block"_err_(/{(0=fi)∧𝕩 M bI}∘𝕩) 0<⊑fr
-  "Only blocks with explicit arguments can have multiple bodies"_err_(/CB) 1↓(»⊸∨cq>ch)<cm>fx
-  "Block bodies must be of the same kind"_err_(/CB) 1↓cf<»⊸≠ft
+  "Unreachable body"_err_(/CB) 1↓(»⊸∨(¬hl)⌾(ch⊸/)cq)<cm>fx
   fsc←(ft⊏0‿2‿3)+3×fx                       # Special name count
   hv-↩(»+`hc)⊏3×¬ch/fx                      # Header variable slot
 
@@ -233,11 +236,11 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   tr←1≤er←ir⊏˜IT»ps                         # er: expression role; tr: train or modifier expression
   no←0⌈-ir⋄ne←0⌈-er⋄nei↩g⋄nx⊏˜↩gr           # Nothing value; expression
   "Nothing (·) cannot be assigned"_nerr ne×a
+  "Can't use Nothing (·) as predicate"_nerr ne×𝕩=pred
   oa←⌽/hg<op←(er<2)∧r≥2⋄ro←op∨«op∧m2←r=3    # op: active modifiers; ro: mod or right operand
   "Missing operand"_nerr op×2(«⌈m2×»)no⌈2×m2≥ro∨r∊↕2
   s←𝕩=sep⋄fo←𝕩∊⟨2+⊑bB,1+⊑bH⟩                # Separators, function open { or ;
   ls←s∧fo<○IT lo←𝕩=4+⊑bB                    # List Separators: after ⟨lo, not {fo
-  "Can't use Nothing (·) in lists"_nerr ne×»lo∨ls
   "Double subjects (missing ‿?)"_err_(G) ∧⟜«ro»⊸∨⊸<r=0
   mm←𝕩=2+⊑bG⋄ma←tr<mm∧«ir≥1⋄mm∧↩1»ps        # Modified assignment; monadic modified
   "No right-hand side in non-modified assignment"_err_(G) ma<mm
@@ -247,6 +250,8 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   ak←af+(0≤ar)+(ai⊏ma)+(⊑bG)-˜ai⊏𝕩          # Class of assignment: 1⇐ 2⇐? 3←? 4↩? 5+↩?
   at∾↩hj⋄ac←«⊸-(ak∾6¨hj)⌾(at⊸⊏)0¨𝕩          # Header assignment is 6 temporarily
   aa←×gac←g⊏ac↩»+`(1⊸»⊸∨0=+`)⊸×gi⊏ac        # Broadcast ac to the entire target
+  api←/ap←aa∧2=no                           # Assignment placeholder
+  "Can't use Nothing (·) in lists"_nerr (¬ap)×no×(gr⊏¬ns)∨»lo∨ls
   ac-↩3×ah←6=ac                             # Assignment is header; 6→3
   nx⌈↩aa×1=no                               # Prevent assignment to 𝕨 if it's ·
   nf←H ac<xv=vi-˜⊑bG                        # Namespace bodies
@@ -259,7 +264,7 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   aid←(¯6⊸≤∧<⟜nv)𝕩-vi                       # Assignable identifer
   hq←/hp←(g⊏ah)∧𝕩≥nv+vi                     # Header constant
   atc←(hg<ps<«aa∧r≥0)<aid∨hp∨(ps>«𝕩=⊑bL)∨𝕩(=⟜(3+⊑)<M)bB
-  "Assignment target must be a name or list of targets"_err_(G) (a∨atc)<aa
+  "Assignment target must be a name or list of targets"_err_(G) (a∨atc∨ap)<aa
   "Can't nest assignments (write aliases with ⇐)"_err_(ai⊏G) ((5≠ai⊏gac)∧ak=2)<ai⊏aa
   "Can't use result of function/modifier assignment without parentheses"_err_(G) hg<(0<er)∧(0≤r)∧»⊸>aa
   af>↩alm←ai⊏aa⋄al←alm/ai                   # aliases al
@@ -306,23 +311,24 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   bk←c⊏gi                                   # Block loads
   ll←sll∾˜(¬lo/1«ps)+-⟜»1↓(lo∾1)/+`ls∾0     # List Length
   dr←(hd¬⊸/hj)∾/s>(2=ne)∨ls∨»r=¯5⋄rt←/fo    # Drop (block separator) and return
-  qp←/𝕩=2+⊑bH                               # Predicate
+  qp←/𝕩=pred                                # Predicate
   fl←(dy×⊏⟜os)⊸+fa+dy                       # Function application site
   dr∾↩((1+dy)×fn←2=fm←fa⊏ne)/fl             # Turn function applications on · to drops
   fn↩¬fn⋄fa/˜↩fn⋄fl/˜↩fn                    # And remove them
 
   # Object code generation: numbers oc ordered by source location (after rev) oi
   ao←48+(0⌈(1+⊑bG)-˜ai⊏𝕩+ma+mm)∾-hd         # Assignment opcode
-  or←⍋oi←idor∾g⊏˜∾⟨cn,cn,bk,bk,hq,2/l,at,dr,qp,al+1,al+1,oa+1⌈oa⊏os,fl,rt⟩
-  oc←or⊏∾idoc∾⟨0¨cn,ob,1¨bk,1+↕≠bk,43¨hq,⥊⍉(11+l⊏aa)≍ll,ao,6¨dr,42¨qp,66¨al,vi-˜(al-1)⊏𝕩
+  or←⍋oi←idor∾g⊏˜∾⟨cn,cn,bk,bk,hq,api,2/l,at,dr,qp,al+1,al+1,oa+1⌈oa⊏os,fl,rt⟩
+  oc←or⊏∾idoc∾⟨0¨cn,ob,1¨bk,1+↕≠bk,43¨hq,44¨api,⥊⍉(11+l⊏aa)≍ll,ao,6¨dr,42¨qp,66¨al,vi-˜(al-1)⊏𝕩
                24+oa⊏r,16+(fn/dy+2×fm⌈1=ny)+4×0<fa⊏er,¯1↓rc←7+nf⟩
   # Instruction source positions
   MI←-⊸↓˜⟜≠∾g⊏˜⊢⋄oj←(rt-∘≠⊸⌽oi⌊1-˜≠i)Mi∾⟨1-˜at,oa,fa⟩
   ind←⟨oj,oj Mi fa⊏IT»¬ro∨ma⟩(¯1∾˜or⊏(≠rt)⊸⌽)⊸⊏¨i‿e
   # Indices for multi-body blocks
-  cj←/cv←1+1=ciw←cw⊏˜ci←/cm∨↩fx∧1≠cw
-  ck←4⌊(2×ci⊏ut⌾(ch⊸/)0¨ch)+1<ciw
-  cg←¯1+`cif←ci⊏cf
+  cm∨↩(fx∧1≠cw)∨0<ut↩ut⌾(ch⊸/)ch            # Dyad- and inverse-only generate as multiple
+  cj←/cv←1+1=ciw←cw⊏˜ci←/cm                 # Number of copies
+  ck←4⌊(2×ci⊏ut)+1<ciw                      # Position
+  cg←¯1+`cif←ci⊏cf                          # Which block
   ckt←(2-¬(cf∧cm)/fx)⌈(cif/·⍋⊏⟜cg)⊸⊏∘⍒⊸⊏cv+ck
   ci↩ckt/⊸⊔(¯1(↑∾˜cj(⊒∘⊣+⊏)ck+cg⊏↓)0∾+`ckt)⊔cj⊏ci
   # Output
@@ -333,7 +339,7 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
 
 Compile←{
   defaults←⟨⟩‿(!∘"System values not supported"¨)‿⟨⟩‿(↕0)
-  prims‿Sys‿vars‿redef ← ∾⟜(≠↓defaults˙) ≍○<⍟(4<≠)𝕨
+  prims‿Sys‿vars‿redef ← ∾⟜(≠↓defaults˙) ⋈⍟(4<≠)𝕨
   ⟨tok,role,val,t0,t1⟩←tx←sys‿vars Tokenize 𝕩
   ⟨oc,prim,blk,bdy,oi⟩←⟨role,⊑val,t0,t1,redef»0¨vars⟩ Parse tok
   ⟨oc, ∾⟨prim⊏prims⟩∾1↓val, <˘⍉>blk, <˘⍉>bdy, oi, tx⟩

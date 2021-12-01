@@ -25,10 +25,10 @@ tp ← y ≍˜¨¨ 1‿4/⟨tx,↕lf⟩
 hp ← 0.2‿¯0.45(+⟜(1‿0×sh)≍¯2⊸×⊸+)1‿0×dim
 L0 ← ("xy"≍⌜"12")≍˘○⥊ ·FmtNum d × ·⌽˘ (≍˘⟜-0.08×4≍˜×∘-˜´) + ≍⟜(2↑y)
 LL ← "line" Elt =⟜li "mask"‿"url(#m)"⊸∾⍟⊣ L0∘≍
-Ilg← (1⊸+∾-)∘= <⊸(⊔¨) ∾≍○<∾○(↕∘≠)
+Ilg← (1⊸+∾-)∘= <⊸(⊔¨) ∾⋈∾○(↕∘≠)
 
 lgg ← "linearGradient"At"id=grad|x2=0|y2=1"
-Stop ← "stop" Elt "offset"‿"stop-color"≍˘≍○<
+Stop ← "stop" Elt "offset"‿"stop-color"≍˘⋈
 defs ← "defs" Enc ("mask"At"id=m") Enc ⟨
   lgg Enc "0.6"‿"0.9" Stop¨ "#000"‿"#fff"
   "rect" Elt "fill"‿"url(#grad)" ∾ ((sh⊑⊸≍⊑) Rp dim⊑⊸≍-˜´) 2↑y
@@ -71,7 +71,7 @@ Member of can be used in a [train](train.md) to compute the set intersection and
 
         "initial set" (¬∘∊/⊣) "difference"  # Remove 𝕩
 
-These are the APL functions Intersect (`∩`) and Without (`~`). Really, only `𝕩` is treated like a set, while the ordering and multiplicity of elements of `𝕨` are maintained. I think the explicit implementations show this well, since `𝕩` is only used as the right argument to `∊`, and prefer this clarity to the brevity of a single symbol.
+These functions appear in APL as Intersect (`∩`) and Without (`~`). Really, only `𝕩` is treated like a set, while the ordering and multiplicity of elements of `𝕨` are maintained. I think the explicit implementations show this well, since `𝕩` is only used as the right argument to `∊`, and prefer this clarity to the brevity of a single symbol.
 
 ## Index of
 
@@ -103,7 +103,7 @@ Above we said that `𝕩∊𝕨` is `(𝕨⊐𝕩)<≠𝕨`, so that `⊐˜<≠�
 
         "aabbcc" ((⊒˜=≠∘⊢)/⊣) "baa"  # Multiset difference
 
-This primitive gives an interesting way to implement the [ordinals](order.md#ordinals) pattern that might be easier to understand than the APL classic `⍋⍋` (it's probably a little slower though). The idea is to use the sorted array as the left argument to `⊒`. Now the index returned for each cell is just where it ended up in that sorted order. If we used ordinary Index of then equal cells would share the smallest index; Progressive Index of means ties are broken in favor of earlier cells.
+This primitive gives an interesting way to implement the [ordinals](order.md#ordinals) pattern that might be easier to understand than the classic `⍋⍋` (it's probably a little slower though). The idea is to use the sorted array as the left argument to `⊒`. Now the index returned for each cell is just where it ended up in that sorted order. If we used ordinary Index of then equal cells would share the smallest index; Progressive Index of means ties are broken in favor of earlier cells.
 
         ⍋∘⍋ "adebcedba"
 

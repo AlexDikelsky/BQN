@@ -90,6 +90,10 @@
 <td>Current filename</td>
 </tr>
 <tr>
+<td><code><span class='Value'>•wdpath</span></code></td>
+<td>Shell's working directory path</td>
+</tr>
+<tr>
 <td><code><span class='Function'>•Exit</span></code></td>
 <td>Leave the top-level running program</td>
 </tr>
@@ -100,6 +104,7 @@
 <p><code><span class='Value'>•args</span></code> is the arguments passed as the file was invoked, either from the command line or <code><span class='Function'>•Import</span></code>. For command line calls it is a list of strings.</p>
 <p><code><span class='Value'>•path</span></code> simply gives the path of the file in which it appears. It includes a trailing slash but not the name of the file itself.</p>
 <p><code><span class='Value'>•name</span></code> gives the name, including the extension, of the file in which it appears. It doesn't include the path.</p>
+<p><code><span class='Value'>•wdpath</span></code> returns the path of the current working directory, like the Unix <code><span class='Value'>pwd</span></code> command, but including a trailing slash.</p>
 <p><code><span class='Function'>•Exit</span></code> immediately terminates the running BQN process. If the argument is a valid return code (on Unix, an integer), it is returned; otherwise, the default return code (the one returned when the end of the program is reached) is used.</p>
 <h2 id="files"><a class="header" href="#files">Files</a></h2>
 <p>The system namespace value <code><span class='Value'>•file</span></code> deals with file operations. For the purposes of <code><span class='Value'>•file</span></code>, paths in the filesystem are always strings. As with <code><span class='Function'>•Import</span></code>, file paths may be relative or absolute, and relative paths are relative to <code><span class='Value'>•path</span></code>, except in <code><span class='Value'>•file.</span><span class='Function'>At</span></code> which allows <code><span class='Value'>𝕨</span></code> to specify an alternate base directory. The value <code><span class='Value'>•path</span></code> used for a particular instance of <code><span class='Value'>•file</span></code> is determined by the file that contains that instance.</p>
@@ -189,7 +194,7 @@
 </tr>
 </tbody>
 </table>
-<p>Times are Unix timestamps, that is, seconds since the Unix epoch, as used by <a href="#time">time</a> system values. File permissions on Unix are a three-element list of numbers giving the permissions for the owner, group, and other users. The file type is one of the following characters for the POSIX file types, matching Unix <code><span class='Value'>ls</span> <span class='Function'>-</span><span class='Value'>l</span></code> with <code><span class='String'>'f'</span></code> instead of <code><span class='String'>'-'</span></code>.</p>
+<p>Times are Unix timestamps, that is, non-leap seconds since the Unix epoch, as used by <a href="#time">time</a> system values. File permissions on Unix are a three-element list of numbers giving the permissions for the owner, group, and other users. The file type is one of the following characters for the POSIX file types, matching Unix <code><span class='Value'>ls</span> <span class='Function'>-</span><span class='Value'>l</span></code> with <code><span class='String'>'f'</span></code> instead of <code><span class='String'>'-'</span></code>.</p>
 <ul>
 <li><code><span class='String'>'f'</span></code>: File</li>
 <li><code><span class='String'>'d'</span></code>: Directory</li>
@@ -312,6 +317,22 @@
 </table>
 <p><code><span class='Function'>•Out</span></code> prints a string to stdout, with a trailing newline. <code><span class='Function'>•Show</span></code> displays a BQN value to the programmer (the representation is not specified, and does not need to be plain text). <code><span class='Function'>•Fmt</span></code> returns a string (not a character table: lines are separated by linefeeds) indicating how <code><span class='Value'>𝕩</span></code> would be printed by the interactive environment. Both <code><span class='Function'>•Show</span></code> and <code><span class='Function'>•Fmt</span></code> may take a left argument configuring how the value should be formatted.</p>
 <p><code><span class='Function'>•Repr</span></code> attempts to return a string so that <code><span class='Function'>•BQN</span> <span class='Function'>•Repr</span> <span class='Value'>𝕩</span></code> matches <code><span class='Value'>𝕩</span></code>. If <code><span class='Value'>𝕩</span></code> contains any mutable values (operations or namespaces), this is not possible. However, if such a values is stateless, in the sense that they don't access variables outside of their own scopes, it is permissible for <code><span class='Function'>•Repr</span></code> to return source code that would create a value with identical behavior.</p>
+<h2 id="interface"><a class="header" href="#interface">Interface</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code><span class='Function'>•SH</span></code></td>
+<td>Execute shell command and return <code><span class='Value'>exitcode</span><span class='Ligature'>‿</span><span class='Value'>stdout</span><span class='Ligature'>‿</span><span class='Value'>stderr</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>The argument to <code><span class='Function'>•SH</span></code> is a list of strings giving the command and its arguments (for example <code><span class='String'>&quot;mv&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;old&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;new&quot;</span></code>). The command is executed synchronously, and the result is a list of three elements: the command's exit code, text written to stdout, and text written to stderr. In both cases the text is a plain string containing all text emitted by the program. Text is interpreted as UTF-8, with an error if it's not valid UTF-8.</p>
 <h2 id="operation-properties"><a class="header" href="#operation-properties">Operation properties</a></h2>
 <table>
 <thead>
@@ -426,16 +447,6 @@
 <td>5</td>
 <td><code><span class='Value'>𝕗</span><span class='Separator'>,</span><span class='Value'>𝕣</span><span class='Separator'>,</span><span class='Value'>𝕘</span></code></td>
 </tr>
-<tr>
-<td>Left partial</td>
-<td>6</td>
-<td><code><span class='Value'>𝕗</span><span class='Separator'>,</span><span class='Value'>𝕣</span></code></td>
-</tr>
-<tr>
-<td>Right partial</td>
-<td>7</td>
-<td><code>  <span class='Value'>𝕣</span><span class='Separator'>,</span><span class='Value'>𝕘</span></code></td>
-</tr>
 </tbody>
 </table>
 <h2 id="time"><a class="header" href="#time">Time</a></h2>
@@ -470,7 +481,7 @@
 </tbody>
 </table>
 <p>All times are measured in seconds.</p>
-<p>The <a href="https://en.wikipedia.org/wiki/Unix_time">Unix epoch</a> is 1970-01-01 00:00:00 UTC. <code><span class='Function'>•UnixTime</span></code> is intended for absolute time measurement and should be implemented with the method that gives the most accurate result at any given time. <code><span class='Function'>•MonoTime</span></code> is intended for relative measurement and should use the method that gives the most precise time differences over the course of the program. Its return value must never decrease between calls.</p>
+<p>The <a href="https://en.wikipedia.org/wiki/Unix_time">Unix epoch</a> is 1970-01-01 00:00:00 UTC, and <a href="https://en.wikipedia.org/wiki/Unix_time">Unix time</a> is the number of seconds since this epoch, with adjustments for leap seconds. <code><span class='Function'>•UnixTime</span></code> is intended for absolute time measurement and should use the source most accurate reflects Unix time when it's called. <code><span class='Function'>•MonoTime</span></code> is intended for relative measurement and should use the method that gives the most precise time differences over the course of the program. Its return value must never decrease between calls.</p>
 <p><code><span class='Modifier'>•_timed</span></code> returns the total time taken divided by the number of function calls (<code><span class='Value'>𝕨</span></code> if provided and 1 otherwise), including the overhead required for the outer loop that counts iterations (which will typically be negligible in comparison to the BQN code).</p>
 <p>More accurately the modifier <code><span class='Modifier2'>•_maxTime_</span></code> <em>may</em> fail if execution of <code><span class='Function'>𝔽</span></code> takes over <code><span class='Value'>𝕨</span><span class='Function'>𝔾</span><span class='Value'>𝕩</span></code> seconds, and should fail as quickly as it is practically able to. The most likely way to implement this modifier is to interrupt execution at the given time. If <code><span class='Function'>𝔽</span></code> completes before the interrupt there is no need to measure the amount of time it actually took.</p>
 <h2 id="random-generation"><a class="header" href="#random-generation">Random generation</a></h2>

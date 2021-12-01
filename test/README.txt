@@ -1,25 +1,33 @@
-Test scripts:
+Does your BQN work? Run
 
-  Script            Compiler host   Output host/VM
-- this.bqn          Any
-- js                Self-host       Javascript
-- dz_comp           dzaima/BQN      dzaima/BQN
-- dz_wasm.js        dzaima/BQN      WebAssembly
+$ bqn test/this.bqn
 
-this.bqn can be run in any implementation that supports the necessary
-system functions (•file.List, •file.Lines, •args, •Out, •BQN, •Repr). It
-runs all tests by default, and can be run on a subset by passing their
-names as arguments.
+to see. There are additional tests here used for development:
 
-dz_comp uses the self-hosted compiler ../src/c.bqn by default but not
-the runtime ../src/r*.bqn. Pass -rt to test with the runtime, and -nocomp
-to test dzaima/BQN only (this doesn't pass as of the time of writing).
+  Script        Compiler host     Output host/VM
+- this.bqn      bqn               Self
+- js            docs/bqn.js       Self
+- unit.bqn      bqn               Self + repo
+- dzaima        dzaima/BQN        Self + repo
+- wasm.js       bqn               WebAssembly
+
+"bqn" can be any implementation that supports the necessary system
+functions (•file.List, •file.Lines, •args, •Out, •BQN, •Repr).
+
+unit.bqn and dzaima can test components from this repostory, by default
+the compiler only. The following options are supported:
+
+- -nocomp: native execution
+- default: compiler (src/c.bqn)
+- -rt:     compiler and runtime (src/r*.bqn)
+- -ref:    compiler and primitive specification (spec/reference.bqn)
+
+Every script but wasm.js can be run on a specified set of tests by
+passing the test names as arguments. this.bqn and unit.bqn run on all
+tests by default; other scripts use the following default tests:
 
 Test cases (cases/):
-                  js    dz_comp   dz_wasm.js
-- simple.bqn       *       *          *
-- syntax.bqn       *       *
-- prim.bqn                 *
-
-js or dz_comp can be run on a specified set of tests by passing the test
-names as arguments.
+                  js    dzaima   wasm.js
+- simple.bqn      *       *        *
+- syntax.bqn      *       *
+- prim.bqn                *

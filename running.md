@@ -2,7 +2,7 @@
 
 # How to run BQN
 
-[CBQN](https://github.com/dzaima/CBQN) is now the primary offline implementation. However, dzaima/BQN still works, and is used for some testing. Scripts in this repository use `bqn` in the `#!` line if any BQN can run them, and `dbqn` if only dzaima/BQN works.
+[CBQN](https://github.com/dzaima/CBQN) is now the primary offline implementation, and can be used everywhere in this repository, except test/dzaima which is specifically for testing with dzaima/BQN. Scripts start with `#! /usr/bin/env bqn` in order to look up the user's `bqn` executable.
 
 For Nix users, nixpkgs now has repositories for several implementations; `cbqn` is recommended for general use.
 
@@ -14,8 +14,9 @@ This version of BQN is [implemented](implementation/README.md) mainly in BQN its
 
 Support in the following languages has been implemented:
 - Javascript, in this repository. Slow (compiles at ~5kB/s) but usable.
-- [C](https://github.com/dzaima/CBQN), targetting high performance. Some parts are fast, some are not.
-- dzaima/BQN ([bqn.bqn](bqn.bqn)), mainly for testing.
+- [C](https://github.com/dzaima/CBQN), targetting high performance. Many parts are fast, some are not.
+- [C++](https://github.com/ashermancinelli/cxbqn), planning to enable GPU use. It works but is still early-stage.
+- BQN ([bqn.bqn](bqn.bqn)), for testing the compiler easily.
 - [Erlang](https://github.com/cannadayr/ebqn), intended for embedding. Too slow to be practical; a [Rust version](https://github.com/cannadayr/ebqn-rs/) is in progress to fix this.
 
 #### Javascript
@@ -41,10 +42,6 @@ In this repository and elsewhere, dzaima/BQN scripts are called with `#! /usr/bi
     java -jar /path/to/dzaima/BQN/BQN.jar "$@"
 
 If compiled with Native Image, `nBQN` can be used directly instead.
-
-#### dzaima+reference BQN
-
-This repository contains a dzaima/BQN script `dzref` that fills in gaps in primitive support with BQN implementations. It was used for md.bqn for a while and is no longer used now. The command-line arguments are a script to run and followed by the `•args` to supply to it.
 
 ### BQN2NGN
 

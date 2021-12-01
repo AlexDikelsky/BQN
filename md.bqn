@@ -207,7 +207,7 @@ Markdown ← {filename𝕊𝕩:
     code ← JoinLines 𝕩
 
     # Highlight and unescape html-unsafe characters
-    c‿ci ← extensions◶(2⥊<⟨⟩)‿GetHighlights code
+    c‿ci ← extensions◶(⋈˜⟨⟩)‿GetHighlights code
     em‿e‿ei ← CharEntities code
 
     # If every line is indented by at least 4 additional spaces, we will
@@ -220,7 +220,7 @@ Markdown ← {filename𝕊𝕩:
       g ← 𝕩∊"←↩"
       (⊑g⊐1) (<⟜(≠g))◶⟨1,¬(" "∾∾idChars)∧´∘∊˜↑⟩ 𝕩
     }
-    r‿ri ← addRslt◶(2⥊<⟨⟩)‿{
+    r‿ri ← addRslt◶(⋈˜⟨⟩)‿{
       ⟨ (ShowRslt ⊣◶⟨"",(⥊∾⟜lf⎉1)∘Fmt∘⊢⟩ CodeExec)⎊("ERROR"∾lf)⍟(0<≠)¨ 𝕩
         1 -˜ +` 1 + ≠¨ 𝕩   ⟩ # Don't forget the trailing newline
     } 𝕩
@@ -361,7 +361,7 @@ Markdown ← {filename𝕊𝕩:
     # If span has both a leading and a trailing space, they are removed.
     remSpace ← I2M ⥊ ((1<-˜˝˘)∧·∧˝˘' '=⊏⟜𝕩)⊸/ -⟜0‿1˘ codeBounds
     codeMask ∧↩ ¬ remSpace
-    ⟨code,codePos⟩ ← codeMask extensions◶(2⥊<⟨⟩)‿GetMultiHighlights 𝕩
+    ⟨code,codePos⟩ ← codeMask extensions◶(⋈˜⟨⟩)‿GetMultiHighlights 𝕩
     include ← ¬ remSpace ∨ ≠` I2M ⥊ ctInds
     codeBounds ↩ ⥊ -⟜1‿0˘ codeBounds
     unused ← actual ∧ include ∧ ¬ codeMask
@@ -543,9 +543,9 @@ idChars ← ⟨
 
 # Return BQN highlights for an string 𝕩, as an ⟨add,pos⟩ list for Modify
 # (include will be all 1s).
-GetHighlights ← {
-  # Characters used by BQN, and the HTML class they are associated with.
+hlchars‿classTag ← {
   func‿mod1‿mod2 ← •Import "src/glyphs.bqn"
+  # Characters used by BQN, and the HTML class they are associated with.
   classes‿chars ← <˘ ⍉ ∘‿2⥊⟨
     0             , " "∾@+9‿10  # Should never be highlighted
     "Value"       , "𝕨𝕩𝕗𝕘𝕤"
@@ -565,9 +565,11 @@ GetHighlights ← {
   ⟩
   # Turn non-whitespace classes into ⟨open,close⟩ html tags.
   classTag ← ""‿"" ∾ > {⟨"<span class='"∾𝕩∾"'>","</span>"⟩}¨ 1↓classes
-
+  chars‿classTag
+}
+GetHighlights ← {
   # Find each character's group, sending unknowns to 1 and # to 0.
-  col ← (1-˜≠chars) (⊢-⊣×≤) chars FindGroup 𝕩
+  col ← (1-˜≠hlchars) (⊢-⊣×≤) hlchars FindGroup 𝕩
   col-↩ 4×(𝕩='.')>«𝕩∊'0'+↕10 # Namespace dot: 5→1
 
   # Locate comments and strings.
@@ -588,7 +590,7 @@ GetHighlights ← {
   # Split rows and group into text‿comments
   tc ← ((⊏˘b)⊏c) ∾⟜2⊸⊔ <˘b
   # Color with "String" and "Comment"
-  col ⌈↩ +´ (2‿1-˜≠classes) × ToMask¨ tc
+  col ⌈↩ +´ (2‿1-˜≠classTag) × ToMask¨ tc
 
   # Color numeric literals and identifiers
   id ← col=5                 # ←→ 𝕩∊idChars
@@ -623,7 +625,7 @@ GetMultiHighlights ← {
 ################################
 # Format an array to a string
 tn ← "*"⊸(∾∾⊣)¨"array"‿"function"‿"1-modifier"‿"2-modifier"‿"namespace"
-fmt ← ⊑ (•Import "src/f.bqn"){𝔽} ⟨•Type,•Decompose,•Glyph⎊(tn⊑˜2-˜•Type),•Repr⟩
+fmt ← ⊑ (•Import "src/f.bqn"){𝔽} ⟨•Type,•Decompose,•Glyph⎊(tn⊑˜2-˜•Type),"0"⍟("¯0"⊸≡)•Repr⟩
 
 
 ################################
