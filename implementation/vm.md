@@ -10,11 +10,9 @@ The way data is represented is part of the VM implementation: it can use native 
 
 ## Bytecode
 
-The BQN implementation here and dzaima/BQN share a stack-based object code format used to represent compiled code. This format is a list of numbers of unspecified precision (small precision will limit the length of list literals and number of locals per block, blocks, and constants). Previously it was encoded as bytes with the [LEB128](https://en.wikipedia.org/wiki/LEB128) format; while it no longer has anything to do with bytes it's called a "bytecode" because this is shorter than "object code".
+BQN source code is compiled to stack-based object code. This format is a list of numbers of unspecified precision (small precision will limit the length of list literals and number of locals per block, blocks, and constants). Previously it was encoded as bytes with the [LEB128](https://en.wikipedia.org/wiki/LEB128) format; while it no longer has anything to do with bytes it's called a "bytecode" because this is shorter than "object code".
 
-The self-hosted compiler uses a simpler, and less capable, format for block and variable data than dzaima/BQN. Only this format is described here; [dc.bqn](../dc.bqn) adapts it to be compatible with dzaima/BQN.
-
-dzaima/BQN can interpret bytecode or convert it to [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine) bytecode, while the Javascript VM previously interpreted bytecode but now always compiles it. Since interpretation is a simpler strategy, it may be helpful to use the [old Javascript bytecode interpreter](https://github.com/mlochbaum/BQN/blob/f74d9223ef880f2914030c2375f680dcc7e8c92b/bqn.js#L36) as a reference (for bytecode execution only) when implementing a BQN virtual machine.
+Various VMs might interpret or further compile the bytecode: for example CBQN compiles to native code with function calls in x86 and interprets if this is unavailable, and the online version always compiles to JS. For reference, [vm.bqn](../vm.bqn) sticks to a simple design and should be easiest to read.
 
 ### Components
 
@@ -55,7 +53,7 @@ The program's symbol list is included in the tokenization information `t`: it is
 
 ### Instructions
 
-The following instructions are defined by dzaima/BQN. The ones emitted by the self-hosted BQN compiler are marked in the "used" column. Instructions marked `NS` are used only in programs with namespaces, and so are not needed to support the compiler or self-hosted runtime. Similarly, `SETH` is only needed in programs with destructuring headers.
+The following instructions are defined (those without names are tentatively reserved only). The ones emitted by the self-hosted BQN compiler are marked in the "used" column. Instructions marked "NS" are used only in programs with namespaces, and those marked "HE" are used only with headers `:` or predicates `?`. Only those marked "X" are needed to support the compiler and self-hosted runtime.
 
 |  B | Name | Used | Like | Args     | Description
 |---:|------|:----:|-----:|:---------|------------
@@ -86,10 +84,10 @@ The following instructions are defined by dzaima/BQN. The ones emitted by the se
 | 22 | VARU |  X   |  21  | `D`, `I` | Push and clear local variable `I` from `D` frames up
 | 26 | DYNO |      |      | `I`      | Push named variable `I`
 | 27 | DYNM |      |      | `I`      | Push named variable `I` reference
-| 2A | PRED |      |  06  |          | Check predicate and drop
-| 2B | VFYM |  X   |      |          | Convert constant to matcher (for headers)
-| 2C | NOTM |  X   |      |          | Push placeholder assignment matcher
-| 2F | SETH |  X   |  30  |          | Test and set header
+| 2A | PRED |  HE  |  06  |          | Check predicate and drop
+| 2B | VFYM |  HE  |      |          | Convert constant to matcher (for headers)
+| 2C | NOTM |  HE  |      |          | Push placeholder assignment matcher
+| 2F | SETH |  HE  |  30  |          | Test and set header
 | 30 | SETN |  X   |      |          | Define variable
 | 31 | SETU |  X   |      |          | Change variable
 | 32 | SETM |  X   |      |          | Modify variable
@@ -131,7 +129,7 @@ Many instructions just call functions or modifiers or otherwise have fairly obvi
 
 ### Local variables: DFND VARO VARU VARM RETN
 
-The bytecode representation is designed with the assumption that variables will be stored in frames, one for each time an instance of a block is run. dzaima/BQN has facilities to give frame slots names, in order to support dynamic execution, but self-hosted BQN doesn't. A new frame is created when the block is evaluated (see [#blocks](#blocks)) and in general has to be cleaned up by garbage collection, because a lexical closure might need to refer to the frame even after the corresponding block finishes. Lexical closures can form loops, so simple reference counting can leak memory, but it could be used in addition to less frequent tracing garbage collection or another strategy.
+The bytecode representation is designed with the assumption that variables will be stored in frames, one for each time an instance of a block is run. A new frame is created when the block is evaluated (see [#blocks](#blocks)) and in general has to be cleaned up by garbage collection, because a lexical closure might need to refer to the frame even after the corresponding block finishes. Lexical closures can form loops, so simple reference counting can leak memory, but it could be used in addition to less frequent tracing garbage collection or another strategy.
 
 A frame is a mutable list of *slots* for variable values. It has slots for any special names that are available during the blocks execution followed by the local variables it defines. Special names use the ordering `𝕤𝕩𝕨𝕣𝕗𝕘`; the first three of these are available in non-immediate blocks while `𝕣` and `𝕗` are available in modifiers and `𝕘` in 2-modifiers specifically.
 
@@ -210,7 +208,9 @@ The contents of a core runtime are given below. The names given are those used i
 |   — | `Decompose`| `•Decompose`
 |   — | `PrimInd`  | Index for primitive `𝕩`
 
-To define the final two functions, call the second returned element as a function, with argument `Decompose‿PrimInd`. The function `PrimInd` gives the index of `𝕩` in the list of all primitives (defined as `glyphs` in pr.bqn), or the length of the runtime if `𝕩` is not a primitive. The two functions are only needed for computing inferred properties, and are defined by default so that every value is assumed to be a primitive, and `PrimInd` performs a linear search over the returned runtime. If the runtime is used directly, then this means that without setting `Decompose‿PrimInd`, function inferred properties will work slowly and for primitives only; if values from the runtime are wrapped then function inferred properties will not work at all.
+To define the final two functions, call the second returned element as a function, with argument `Decompose‿PrimInd`. The function `PrimInd` gives the index of `𝕩` in the list of all primitives (defined as `glyphs` in pr.bqn), or the length of the runtime if `𝕩` is not a primitive. The two functions are only needed for computing inferred properties, and are defined by default so that every value is assumed to be a primitive, and `PrimInd` performs a linear search over the returned runtime. If the runtime is used directly, then this means that without setting `Decompose‿PrimInd`, function inferred properties will work slowly and for primitives only; if values from the runtime are wrapped then function inferred properties will not work at all. The compiler uses Under with compound right operands, so `Decompose` is needed to self-host.
+
+The compiler returns a third function `SetInv` as well. This function is used to support inverses of non-primitives like `•math.Sin` or a block with an Undo header that the runtime has no way to identify. It's not needed for the runtime or compiler. The argument `𝕩` is a function that takes the runtime's current `Inverse` function (`⁼` is defined as `{i←Inverse𝕗⋄𝕨I𝕩}`) and returns a new one. If given, `𝕨` does the same to `SwapInverse`, the function that inverts `Fn˜`. The result of `SetInv` is the new `Inverse` function.
 
 Remember that `+` and `-` can also work on characters in some circumstances, under the rules of affine characters. Other arithmetic functions should only accept numbers. `=` must work on any atoms including functions and modifiers. `≤` must work on numbers and characters.
 
@@ -239,25 +239,25 @@ The compiler takes the source code as `𝕩`. The execution environment is passe
 - **Runtime**: list of primitive values; see [previous section](#runtime)
 - **System**: function that takes a list of strings and returns corresponding system values
 - **Variables**: names of existing variables in the scope
-- **Depths**: lexical depth of these variables (default `0`; `¯1` for depth 0 but allowing shadowing)
+- **Depths**: lexical depth of these variables (default `0`; `¯1` for depth 0 but allowing redefinition)
 
 If `𝕨` has length greater than 4 it's assumed to be the runtime only. If the length is less than 4, empty defaults that don't define any values are used for the missing arguments.
 
 The system-value function is passed a list of unique normalized names, meaning that each name is lowercase and contains no underscores. It should return a corresponding list of system values. Because system values are requested on each program run, a function that has access to context such as `•path` can construct appropriate system values on demand.
 
-The variable list is used to create REPLs, but has other uses as well, such as allowing execution to take place within a surrounding scope. It consists of a list of normalized names. The corresponding depth list indicates the lexical depth of each of these, with 0 and -1 indicating that the variable should exist directly in the top-level scope. A typical interactive REPL uses only the value -1, because it allows variables to be shadowed. It maintains a single top-level environment to be used for all evaluations. When the programmer enters a line, it's compiled, then the environment and list of top-level names is extended according to the result.
+The variable list is used to create REPLs, but has other uses as well, such as allowing execution to take place within a surrounding scope. It consists of a list of normalized names. The corresponding depth list indicates the lexical depth of each of these, with 0 and -1 indicating that the variable should exist directly in the top-level scope. A typical interactive REPL uses only the value -1, because it allows variables to be redefined—that is, definition with `←` won't fail but instead modify an existing variable. It maintains a single top-level environment to be used for all evaluations. When the programmer enters a line, it's compiled, then the environment and list of top-level names is extended according to the result.
 
 ## Assembly
 
 The full BQN implementation is made up of the two components above—virtual machine and core runtime—and the compiled runtime, compiler, and formatter. Since the compiler unlikely to work right away, I suggest initially testing the virtual machine on smaller pieces of code compiled by an existing, working, BQN implementation.
 
-BQN sources are compiled with [cjs.bqn](../src/cjs.bqn), which runs under [dzaima/BQN](https://github.com/dzaima/BQN/) as a Unix-style script. It has two modes. If given a command-line argument `r`, `c`, or `fmt`, it compiles one of the source files. With any other command-line arguments, it will compile each one, and format it as a single line of output. The output is in a format designed for Javascript, but it can be adjusted to work in other languages either by text replacement on the output or changes to the formatting functions in cjs.bqn.
+BQN sources can be compiled with [cjs.bqn](../src/cjs.bqn). It has two modes. If given a command-line argument `r`, `c`, or `fmt`, it compiles one of the source files. With any other command-line arguments, it will compile each one, and format it as a single line of output. The output is in a format designed for Javascript. VMs in other languages generally copy and modify cjs.bqn to work with the new language (for example cc.bqn in CBQN).
 
 ### Structure
 
 The following steps give a working BQN system, assuming a working VM and core runtime:
 * Evaluate the bytecode `$ src/cjs.bqn r`, passing the core runtime `provide` in the constants array. The result is a BQN list of a full runtime, a function `SetPrims`, and a function `SetInv`.
-* Optionally, call `SetPrims` on a two-element list `⟨Decompose, PrimInd⟩`.
+* Call `SetPrims` on a two-element list `⟨Decompose, PrimInd⟩`.
 * Optionally, call `SetInv` with a function `𝕩` that updates `Inverse` and (more optionally) a function `𝕨` that updates `SwapInverse`.
 * Evaluate the bytecode `$ src/cjs.bqn c`, which uses primitives from the runtime in its constants array. This is the compiler.
 * Evaluate the bytecode `$ src/cjs.bqn f`. This returns a function. Then call it on a four-element list `⟨Type, Decompose, Glyph, FmtNum⟩` to obtain the two-element list `⟨•Fmt, •Repr⟩`.
@@ -275,7 +275,6 @@ Because the compiler works almost entirely with lists of numbers, a correct fill
 * Test the virtual machine with the output of `src/cjs.bqn` on the primitive-less test expressions in [test/cases/bytecode.bqn](../test/cases/bytecode.bqn).
 * There isn't currently a test suite for provided functions (although [test/cases/simple.bqn](../test/cases/simple.bqn) has some suitable tests for arithmetic): your options are to write tests based on knowledge of these functions and primitive tests, or try to load the runtime and work backwards from any failures. The r1 runtime runs code to initialize some primitive lookup tables so failures are likely.
 * Once the runtime is loaded, begin working through the tests in [test/cases/prim.bqn](../test/cases/prim.bqn) with the full runtime but no self-hosted compiler.
-* After primitive tests pass, try to load the compiler, and run it on a short expression. If it runs, you have a complete (not necessarily correct) system, and remaining tests can be run end-to-end!
 * Now, if you haven't already, add a call to `SetPrims`. Test for inferred properties: identity, under, and undo.
-* If all tests pass you can probably compile the compiler.
-* Headers and namespace support aren't required to support the runtime or compiler, but they can be tested as you add them with the header and namespace tests.
+* After primitive and inferred tests pass, try to load the compiler, and run it on a short expression. If it runs, you have a complete (not necessarily correct) system, and remaining tests can be run end-to-end!
+* Headers and namespace support aren't required to support the runtime or compiler, but they can be tested as you add them with the header and namespace tests. Undo headers are tested with the unhead tests.

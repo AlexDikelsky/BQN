@@ -7,7 +7,7 @@
   <link href="style.css" rel="stylesheet"/>
   <style>
     li { margin:0.7em 0; }
-    textarea { padding:0.2em; }
+    textarea, .highlight { padding:0.2em; }
     .perm, .count { font-size:0.7em; margin:-0.2em 0.8em 0 0; }
     .run, .doexplain, .perm { float:right; margin-left:0.4em; }
     .doexplain.selected { background:#777; }
@@ -19,6 +19,7 @@
   <a href="https://mlochbaum.github.io/BQN/" title='BQN homepage'>BQN</a>
   <div class="cont">
     <div class="kb"></div>
+    <div class="highlight"></div>
     <textarea class="code" rows="8" spellcheck="false" autofocus></textarea>
     <div class="count"></div>
     <input class="run" type="submit" value="Run (or shift-enter)"/>
@@ -32,6 +33,7 @@
     <ul>
       <li>Documentation links for primitives are <a href="doc/primitive.html#functions">here</a>.</li>
       <li>You can type special characters with a back<em>slash</em> prefix, as shown by hovering over the character bar above. Customize the prefix with the input at the right.</li>
+      <li>Middle- or modified click on a primitive to go to its help page!</li>
       <li>Any modifier with enter will execute, not just shift.</li>
       <li>The code window is vertically resizeable.</li>
     </ul>

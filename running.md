@@ -2,26 +2,34 @@
 
 # How to run BQN
 
-[CBQN](https://github.com/dzaima/CBQN) is now the primary offline implementation, and can be used everywhere in this repository, except test/dzaima which is specifically for testing with dzaima/BQN. Scripts start with `#! /usr/bin/env bqn` in order to look up the user's `bqn` executable.
+[CBQN](https://github.com/dzaima/CBQN) is the primary offline implementation. Scripts in this repository start with `#! /usr/bin/env bqn` in order to look up the user's `bqn` executable, which is expected to be CBQN.
 
-For Nix users, nixpkgs now has repositories for several implementations; `cbqn` is recommended for general use.
+Third-party packages to build some BQN implementations are available for both Nix and Arch Linux. For general use I recommend `cbqn` from nixpkgs (Nix) and `cbqn-git` from the AUR (Arch).
+
+There are many websites where you can run BQN as well. All but Attempt This Online are based on Javascript BQN.
+- [The main online REPL](https://mlochbaum.github.io/BQN/try.html).
+- Razetime's [alternative](https://razetime.github.io/bqn-repl/) runs as a continuous session so you can save results.
+- Try It Online format: [Attempt This Online](https://ato.pxeger.com/run?1=m704qTBvwYKlpSVpuhZoFJQGAA) runs CBQN server-side; [Do Stuff Online](https://dso.surge.sh/#bqn) runs JS BQN locally.
+- This [Observable notebook](https://observablehq.com/@lsh/bqn) can be imported into other notebooks.
+- [BQN-80](https://dancek.github.io/bqn-80): make animations with BQN.
 
 ### Self-hosted BQN
 
 See the subsections below for instructions on specific implementations.
 
-This version of BQN is [implemented](implementation/README.md) mainly in BQN itself, but a host language supplies basic functionality and can also replace primitives for better performance. This also allows [embedding](doc/embed.md), where programs in the host language can include BQN code. It fully supports all primitives except a few cases of structural Under (`⌾`), and is missing some minor syntax features such as derived 1-modifiers and block returns.
+This version of BQN is [implemented](implementation/README.md) mainly in BQN itself, but a host language supplies basic functionality and can also replace primitives for better performance. This also allows [embedding](doc/embed.md), where programs in the host language can include BQN code. It fully supports all syntax specified so far, and all primitives except a few cases of structural Under (`⌾`). System value support varies at it's implemented separately in each host.
 
 Support in the following languages has been implemented:
+- [C](https://github.com/dzaima/CBQN), targetting high performance. Usually fairly fast.
 - Javascript, in this repository. Slow (compiles at ~5kB/s) but usable.
-- [C](https://github.com/dzaima/CBQN), targetting high performance. Many parts are fast, some are not.
-- [C++](https://github.com/ashermancinelli/cxbqn), planning to enable GPU use. It works but is still early-stage.
-- BQN ([bqn.bqn](bqn.bqn)), for testing the compiler easily.
-- [Erlang](https://github.com/cannadayr/ebqn), intended for embedding. Too slow to be practical; a [Rust version](https://github.com/cannadayr/ebqn-rs/) is in progress to fix this.
+- BQN ([bqn.bqn](bqn.bqn)), for testing without a build step.
+- [C++](https://github.com/ashermancinelli/cxbqn), planning to enable GPU use. Still slow; some cool features.
+- [Rust](https://github.com/cannadayr/rsbqn/), motivated by web use (an [Erlang](https://github.com/cannadayr/ebqn) version is abandoned as too slow).
+- [Julia](https://git.sr.ht/~andreypopp/BQN.jl) embedding, with common primitives implemented natively. Slow startup.
 
 #### Javascript
 
-The online REPL is [here](https://mlochbaum.github.io/BQN/try.html). The file [docs/bqn.js](docs/bqn.js) is zero-dependency Javascript, and can be loaded from HTML or Node.js. For command line use, call the Node.js script [bqn.js](bqn.js), passing a file and `•args`, or `-e` to execute all remaining arguments directly and print the results. [This notebook](https://observablehq.com/@lsh/bqn) shows how to run it in an Observable notebook.
+The file [docs/bqn.js](docs/bqn.js) is zero-dependency Javascript, and can be loaded from HTML or Node.js. For command line use, call the Node.js script [bqn.js](bqn.js), passing a file and `•args`, or `-e` to execute all remaining arguments directly and print the results.
 
 #### CBQN
 
@@ -33,9 +41,9 @@ CBQN uses the self-hosted runtime to achieve full primitive coverage, and implem
 
 ### dzaima/BQN
 
-[dzaima/BQN](https://github.com/dzaima/BQN/) is an implementation in Java created by modifying the existing dzaima/APL, and should be easy to run on desktop Linux and Android. It may be abandoned as dzaima is now working on CBQN. It has almost complete syntax support but incomplete primitive support: major missing functionality is dyadic Depth (`⚇`), Windows (`↕`), and many cases of set functions (`⊐⊒∊⍷`, mostly with rank >1).
+[dzaima/BQN](https://github.com/dzaima/BQN/) is an implementation in Java created by modifying the existing dzaima/APL, and should be easy to run on desktop Linux and Android. It was historically the main implementation, but is now updated only to stay up to date with language changes. It has almost complete syntax support but incomplete primitive support: major missing functionality is dyadic Depth (`⚇`), Windows (`↕`), and many cases of set functions (`⊐⊒∊⍷`, mostly with rank >1).
 
-In this repository and elsewhere, dzaima/BQN scripts are called with `#! /usr/bin/env dbqn`. This requires an executable file `dbqn` somewhere in your path with the following contents:
+To get an executable that works like CBQN, make a script with the following contents. Scripts may use `#! /usr/bin/env dbqn` to run with dzaima/BQN specifically, but this is rare now (in this repository, only `test/dzaima` does it).
 
     #! /bin/bash
 
@@ -45,4 +53,4 @@ If compiled with Native Image, `nBQN` can be used directly instead.
 
 ### BQN2NGN
 
-[BQN2NGN](https://github.com/mlochbaum/BQN2NGN) is a prototype implementation in Javascript build to experiment with the langauge, which is now abandoned.
+[BQN2NGN](https://github.com/mlochbaum/BQN2NGN) is a prototype implementation in Javascript built to experiment with the langauge. It's now abandoned.

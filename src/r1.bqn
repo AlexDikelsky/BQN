@@ -1,8 +1,11 @@
 # BQN runtime part 1. Requires:
 #   Type Fill Log GroupLen GroupOrd _fillBy_
-#   +-×÷⋆⌊⌈|<>=≠≤≥≢⊢⊣⥊∾⋈↑↓↕⊏⊑!⌜˙˜´`∘○⊸⟜◶⊘⍟
+#   +-×÷⋆⌊⌈|<>=≠≤≥≢⊢⊣⥊∾⋈↑↓↕⊏⊑!⌜˙˜¨´`∘○⊸⟜◶⊘⍟
 # Filled in by runtime: glyphs and default PrimInd
 # Provides: all BQN primitives
+
+Ind1 ← { 0 Fill +`(0⌈≠-1˙)⊸↑GroupLen+`𝕩 }
+/ ← Ind1 ⊘ (Ind1⊸⊏)  # LIMITED to natural number list 𝕩/𝕨
 
 Decompose ← {0‿𝕩}
 PrimInd ← {𝕩}
@@ -202,20 +205,17 @@ Find←{
   0 Fill (𝕨 Match (⥊𝕩)⊏˜i+⌜<)⌜ j
 }○ToArray
 
-Ind ← { 0 Fill +`(0⌈≠-1˙)⊸↑GroupLen+`𝕩 }
-Rep ← Ind⊸⊏
 Indices←{
   "/𝕩: 𝕩 must have rank 1" ! 1==𝕩
   "/𝕩: 𝕩 must consist of natural numbers" ! 1×´Nat⌜𝕩
-  Ind 𝕩
+  / 𝕩
 }
 IndicesInv←{
   IA 1==𝕩
   IA 1×´Nat⌜𝕩
-  IX (0⊸≤)◶⟨1,1×´(⊢≤○(⊑⟜𝕩)1⊸+)⌜∘↕⟩1-˜≠𝕩
   GroupLen 𝕩
 }
-SelfClas ← (PermInv∘⍋∘Rep˜⊏˜¯1+`⊢) _self
+SelfClas ← (PermInv∘⍋∘/˜⊏˜¯1+`⊢) _self
 OccurrenceCount ← ↕∘≠⊸(⊣-¨·⌈`×¨) _self
 
 Transpose←(0<=)◶⟨ToArray,{
@@ -226,6 +226,24 @@ TransposeInv←{
   r←1-˜=𝕩 ⋄ s←≢𝕩 ⋄ l←r⊑s ⋄ c←r↑s
   (⥊𝕩)⊏˜(↕l)+⟜(l⊸×)⌜c⥊↕1×´c
 }_fillBy_⊢⍟{IX IsArray𝕩⋄0<=𝕩}
+
+_reorderAxesSub_←{
+  "𝕨⍉𝕩: 𝕨 must have rank at most 1" ! 1≥=𝕨
+  𝕨↩Deshape𝕨 ⋄ 𝕩↩ToArray𝕩
+  "𝕨⍉𝕩: Length of 𝕨 must not exceed rank of 𝕩" ! (≠𝕨)≤r←=𝕩
+  "𝕨⍉𝕩: 𝕨 must consist of valid axis indices" ! 1∧´(Nat∧<⟜r)⌜𝕨
+  r𝔽↩n←GroupLen𝕨
+  a←𝔾 𝕨∾(/0⊸=⌜n)∾{𝕩⊸+⌜↕r-𝕩}≠n
+  l‿s←a⊸Group1⌜⋈⟜Stride≢𝕩
+  (⌊´⌜l) (0<≠∘⊢)◶⟨⥊,((<0)+⌜´s(<+´)⊸(×⌜)⟜↕¨⊣)⊸⊏⟜⥊⟩ _fillBy_ ⊢ 𝕩
+}
+HandleDupAxes←{
+  r←𝕨-0+´(0⌈-⟜1)⌜𝕩
+  "𝕨⍉𝕩: Skipped result axis" ! (≠𝕩)≤r
+  r
+}
+ReorderAxes ← HandleDupAxes _reorderAxesSub_ ⊢
+ReorderAxesInv ← {IA 1≥0⌈´𝕩⋄𝕨} _reorderAxesSub_ PermInv
 
 Prefixes←{
   "↑𝕩: 𝕩 must have rank at least 1" ! 1≤=𝕩
@@ -254,7 +272,7 @@ Pick1←{
   i←0⋄𝕨{i↩(𝕩NormIndP𝕨)+𝕩×i}¨s
   i⊑⥊𝕩
 }⟜ToArray
-Pickd←(IsSimple⥊∘⊣)◶{Pickd⟜𝕩⌜𝕨}‿Pick1
+Pickd←IsArray◶⟨1,IsSimple⥊⟩∘⊣◶{Pickd⟜𝕩⌜𝕨}‿Pick1
 Pick←IsArray∘⊣◶Pick0‿Pickd
 
 _multiAxis←{
@@ -315,7 +333,7 @@ RepInd←(2⌊=∘⊣)◶{
 }‿{
   "𝕨/𝕩: Lengths of components of 𝕨 must match 𝕩" ! 𝕩=≠𝕨
   "𝕨/𝕩: 𝕨 must consist of natural numbers" ! 1×´|∘⌊⊸=⌜𝕨
-  Ind 𝕨
+  / 𝕨
 }‿{
   "𝕨/𝕩: Components of 𝕨 must have rank 0 or 1" ! 0˙
 }
@@ -334,41 +352,103 @@ _fillByPure_←{
 _each  ← {𝕨𝔽⌜⊘(𝔽_eachd)_fillByPure_𝔽○ToArray𝕩}
 _table ← {𝕨𝔽⌜_fillByPure_𝔽○ToArray𝕩}
 
-StructErr←{𝕩}
-IsStructErr ← (3=Type)◶⟨0,StructErr˙⊸=⟩
-structConform ← {𝕎◶0‿𝕏}´⟨IsArray⊢, =○=, MatchS○≢⟩
-_under_←{
-  val←𝕨𝔽○𝔾𝕩
-  # Construct indices
-  Inds ← IsArray◶⟨0,@Fill⥊⟜(↕1×´⊢)∘≢⟩ 𝕩 ⊑⟜⥊⍟(IsArray⊢)´ Reverse
-  _s_ ← {
-    f←𝕗
-    st‿d‿o←𝕩
-    g←𝕨 St Inds∘{f↩f(IsArray⊣)◶⟨⟩‿∾⟨𝕩⟩}⍟(d>IsArray) 𝕘
-    {f _s_ 𝕩}⍟o g
+match←{(0⊑𝕨)◶(1⊑𝕨)‿𝕩}´⟨
+  ⟨=○IsArray, 0⟩
+  ⟨IsArray∘⊢, =⟩
+  ⟨=○=      , 0⟩
+  ⟨MatchS○≢ , 0⟩
+  {1×´⥊𝕨Match¨𝕩}
+⟩
+Depth←IsArray◶0‿{1+0⌈´Depth⌜⥊𝕩}
+
+Join1←{
+  # List of lists
+  "∾𝕩: 𝕩 must have an element with rank at least =𝕩" ! 0<0+´=⌜𝕩
+  i←j←¯1 ⋄ e←⟨⟩ ⋄ a←𝕩
+  {{e↩Deshape a⊑˜i↩𝕩⋄j↩¯1}⍟(1-i⊸=)𝕩⋄(j↩j+1)⊑e}⌜/≠⌜𝕩
+}
+
+under←{
+  Err←{𝕩}
+  IsErr ← (3=Type)◶⟨0,Err˙⊸=⟩
+  E ← Err˙
+  _errIf ← {⊢⊘×○(1-𝔽)◶⟨Err˙,𝕏⟩}
+  SE ← IsErr _errIf⍟(3≥Type)
+
+  Expand ← {
+    f‿a‿i‿q←𝕩 ⋄ e←i⊑⥊a
+    ⟨IsArray◶⟨⟨⟩,∾⟜⟨i⟩⟩f,e,IsArray◶⟨0,@Fill⥊⟜(↕1×´⊢)∘≢⟩e,q⟩
   }
-  IsStruct ← (5=0⊸⊑)◶⟨0,s˙=2⊸⊑⟩ Decompose
-  sf ← isStruct StructFn 𝕘 ⋄ SR ← ¯1 _s_ 0
-  root‿ind ← IsStruct◶⟨0‿StructErr,1‿3⊏Decompose⟩ SF sr
+  _s ← {
+    ⟨st,d‿o⟩←𝕩  # Function, input depth, output is structural
+    f‿a‿i‿q←Expand⍟(d>·IsArray 2⊑⊢)𝕗   # Path, array reference, indices
+    {f‿a‿𝕩‿(q⌈1<o) _s}⍟(0<o) 𝕨 St i
+  }
+  IsStruct ← (4=0⊸⊑)◶⟨0,s˙=2⊸⊑⟩ {Decompose𝕩}
+  NS ← IsStruct _errIf
+  InitS ← {¯1‿⟨𝕩⟩‿0‿0 _s}
+
+  _amb ← {(IsStruct⊢)◶⟨𝕏, 𝕩‿𝕗{𝕨𝕏𝕗}⟩}
+  _mon ← {(𝕗_amb𝕩)⊘(NS𝕩)}
+  _dy  ← {(NS𝕩)⊘(𝕗_amb𝕩)}
+  k‿v ← Split2 ⟨
+    "⊢⊣˜∘○⊸⟜⊘◶",  ⊢  # ˙ handled specially
+    "´˝",         {r←𝕩⋄{IsArray∘⊢◶⟨E,𝕗_r⟩}}
+    "=≠≢",        1‿0 _mon
+    "<⋈",         0‿2 _mon
+    "≍",          1‿1 _mon  # Dyad combines
+    "↕/»«",       1‿1 _dy
+    "⊔",          1‿2 _dy
+    "⥊⌽⍉⊏",       1‿1 _amb
+    "↑↓",         {(1‿2 _amb𝕩)⊘(1‿1 _amb𝕩)}
+    "⊑",          1‿2 _amb
+  # ">",          2‿1 _mon
+  # "∾",          2‿1 _mon  # Dyad combines
+  # "˘⎉¨⌜",
+  # "⚇",
+  ⟩
+  NSPrim ← (Type-3˙)◶⟨NS, {m←𝕩⋄{NS(𝕗_m)˙0}}, {m←𝕩⋄{NS(𝕗_m_𝕘)˙0}}⟩
+  SP ← (Join1 k)_glyphLookup_((k≠⌜⊸/v)∾⟨NSPrim⟩)
+
+  Recompose ← ⊣◶⟨
+    ⊢                  # 0 primitive
+    ⊢                  # 1 block
+    {𝕎𝕏}´⊢             # 2-train
+    {F‿G‿H←𝕩⋄F G H}    # 3-train
+    {F‿m←𝕩⋄F _m}       # 4 1-modifier
+    {F‿m‿G←𝕩⋄F _m_ G}  # 5 2-modifier
+  ⟩
+  Recomp ← (E˙=≥⟜3⊸⊑)◶⟨Recompose,E˙⟩
+
+  SFN ← 0⊸≤◶⟨3,2⊸≤◶⊢‿2⟩∘(0⊑⊢)◶⟨
+    SE · {p←SP𝕩⋄P𝕩} 1⊑⊢           #  0 primitive
+    E˙                            #  1 block
+    DIsConst◶⟨0⊸⊑ Recomp {SFN⌜1↓𝕩}, SE{(1⊑𝕩)˙}⟩  # other operation
+    SE 1⊑⊢                        # ¯1 constant
+  ⟩⟜{Decompose𝕩}
 
   # Traverse indices 𝕩 and values 𝕨.
-  # Return flat lists ⟨indices,values⟩, or structErr if 𝕨 doesn't capture 𝕩.
-  GetInserts←{
-    count←1⋄DC←IsArray◶⟨0,1+0⌈´{count+↩¯1+≠d←⥊𝕩⋄DC⌜d}⟩⋄depth←DC𝕩
-    𝕩 (2⌊depth)◶(⋈○⋈)‿(StructConform◶⟨StructErr˙,⋈○⥊⟩)‿{
+  # Return flat lists ⟨indices,values⟩, or err if 𝕨 doesn't capture 𝕩.
+  conform ← {𝕎◶0‿𝕏}´⟨IsArray⊢, =○=, MatchS○≢⟩
+  GetInserts ← {
+    v‿d←𝕨
+    count←1⋄DC←IsArray◶⟨0,d◶⟨1,1+0⌈´{count+↩¯1+≠d←⥊𝕩⋄DC⌜d}⟩⟩⋄depth←DC𝕩
+    𝕩 (2⌊depth)◶(⋈○⋈)‿(Conform◶⟨Err˙,⋈○⥊⟩)‿{
       Fail←{𝕊‿0}
       # 𝕎 is parent traversal; 𝕩 is current components of ind and val
-      Trav←(IsArray 0⊑⊢)◶⟨⋈, StructConform´∘⊢◶Fail‿{
+      Trav←(IsArray 0⊑⊢)◶⟨⋈, Conform´∘⊢◶Fail‿{
         Parent←𝕎 ⋄ n←≠0⊑a←⥊⌜𝕩 ⋄ j←¯1
         Child←Trav⟜{𝕩⊸⊑⌜a}
         { j+↩1 ⋄ f←n⊸≤◶⟨𝕊˙⊸Child,Parent˙⟩j ⋄ F 0 }
       }⟩
       next ← 0 Trav 𝕨‿𝕩
       res ← {n‿o←Next𝕩⋄next↩n⋄o}⌜ ↕count
-      (next=fail)◶⟨0⊸⊑⌜ ⋈ 1⊸⊑⌜, StructErr˙⟩ res
-    } 𝕨
-  }⍟(1-IsStructErr∘⊢)
-  Struct←{
+      (next=fail)◶⟨0⊸⊑⌜ ⋈ 1⊸⊑⌜, Err˙⟩ res
+    } v
+  }⍟(1-IsErr∘⊢)
+
+  _insert ← {
+    root←𝕗
     i‿v←𝕨
     Set1←𝕨⊸{
       𝕩↩ToArray𝕩
@@ -381,26 +461,23 @@ _under_←{
     }
     _at_ ← {(↕≠𝕩)𝔽⍟((𝔾𝕩)=⊣)¨𝕩}
     Set ← 0⊸{ (𝕨≥≠root)◶⟨≢⥊(1+𝕨)⊸𝕊_at_(𝕨⊑root˙)∘⥊, Set1⟩ 𝕩 }
-    IsArray∘root◶⟨0⊑v˙, Set⟩ 𝕩
-  } _fillBy_ ⊢
-  IsStructErr◶⟨Struct⟜(𝕩˙), {𝕏val}·Inverse𝔾˙⟩ val GetInserts ind
-}
+    IsArray∘root◶⟨0⊑v˙, Set⟩ _fillBy_ ⊢ 𝕩
+  }
 
-match←{(0⊑𝕨)◶(1⊑𝕨)‿𝕩}´⟨
-  ⟨=○IsArray, 0⟩
-  ⟨IsArray∘⊢, =⟩
-  ⟨=○=      , 0⟩
-  ⟨MatchS○≢ , 0⟩
-  {1×´⥊𝕨Match¨𝕩}
-⟩
-Depth←IsArray◶0‿{1+0⌈´Depth⌜⥊𝕩}
+  {
+    val←𝕨𝔽○𝔾𝕩
+    root‿ind‿d ← IsStruct◶⟨0‿Err‿0,0‿2‿3⊏1⊑Decompose⟩ 𝕘 SFN⊸{𝕎𝕩} InitS 𝕩
+    IsErr◶⟨root _insert⟜(𝕩˙), {𝕏val}·Inverse𝔾˙⟩ val‿d GetInserts ind
+  }
+}
 
 ≡ ← Depth          ⊘ Match
 ≢ ↩ IsArray◶(↕0)‿≢ ⊘ (1-Match)
 
 IF ← ⊢⊣!∘≡  # Intersect fill
 IEF← (0<≠)◶⟨⊢_fillBy_ Fill, ⊢_fillBy_ IF´⟩∘⥊
-_fillMerge_ ← {(0<≠∘⥊)◶⟨(𝔾○≢⥊⟨⟩˙)_fillBy_⊢⟜Fill, 𝔽 ⊣_fillBy_⊢ IEF⟩}
+HasFill ← 0=·Fill⊢_fillBy_(@⍟(3≤Type∘⊣))⟜(↕0)
+_fillMerge_ ← {(0<≠∘⥊)◶⟨(𝔾○≢⥊⟨⟩˙)_fillBy_⊢⟜Fill⍟HasFill, 𝔽 ⊣_fillBy_⊢ IEF⟩}
 Merge←{
   c←≢0⊑⥊𝕩
   (">𝕩: Elements of 𝕩 must have matching shapes" ! c =○≠◶0‿MatchS ≢)⌜⥊𝕩
@@ -417,30 +494,25 @@ JoinTo←(1<⌈○=)◶(∾○⥊)‿{
   (⟨l⟩∾0⊑c)⥊𝕨∾○⥊𝕩
 }○ToArray _fillBy_ IF
 
-Join1←{
-  # List of lists
-  "∾𝕩: 𝕩 must have an element with rank at least =𝕩" ! 0<0+´=⌜𝕩
-  i←j←¯1 ⋄ e←⟨⟩ ⋄ a←𝕩
-  {{e↩Deshape a⊑˜i↩𝕩⋄j↩¯1}⍟(1-i⊸=)𝕩⋄(j↩j+1)⊑e}⌜Ind≠⌜𝕩
-}
+_s0←{s←𝕨⋄F←𝔽⋄{o←s⋄s F↩𝕩⋄o}⌜𝕩}
+Stride←Reverse 1 ×_s0 Reverse
 JoinM←{
   # Multidimensional
   n←≠z←⥊𝕩 ⋄ s←≢⌜z ⋄ r←=𝕩
-  _s0←{s←𝕨⋄F←𝔽⋄{o←s⋄s F↩𝕩⋄o}⌜𝕩}
   sh←≢𝕩 ⋄ p←1 ⋄ i←j←he←<0
-  (Reverse 1×_s0 Reverse sh){
+  (Stride sh){
     q←𝕨
     a←𝕩⊑sh
     h←-⟜(1-˜0⌈´rr)⌜rr←=⌜z⊏˜q⊸×⌜↕a
     "∾𝕩: Incompatible element ranks" ! 1×´0⊸≤⌜h
-    hl←≠ih←q⊸×⌜Ind h
+    hl←≠ih←q⊸×⌜/h
     sf←s⊏˜⥊((a×q)⊸×⌜↕p)+⌜ih+⌜↕q
     si←⥊he⊣⌜↕hl×q
     "∾𝕩: Incompatible element ranks" ! 1×´si<⟜≠¨sf
     m←si⊑¨sf
     lf←m⊏˜q⊸×⌜↕hl
     "∾𝕩: 𝕩 element shapes must be compatible" ! m MatchS ⥊(↕p)⊢⌜lf⊣⌜↕q
-    k ← Ind l←{i←¯1⋄⊢◶1‿{(i+↩𝕩)⊑lf}⌜h}
+    k ← / l←{i←¯1⋄⊢◶1‿{(i+↩𝕩)⊑lf}⌜h}
     c ← (↕≠k)-¨k ⊏ 0+_s0 l
     he↩ he +⌜ h
     i ↩ (i ×⌜ k⊏l) +¨ i⊢⌜c
@@ -464,49 +536,6 @@ Join←(2⌊=)◶⟨
   (↕d)(r≤⊣)◶⟨⊑⟜𝕨⊸×,⊢⟩¨𝕩
 } ⊣ "∾𝕩: 𝕩 must be an array"!IsArray
 
-Recompose ← ⊣◶⟨
-  ⊢                  # 0 primitive
-  ⊢                  # 1 block
-  {𝕎𝕏}´⊢             # 2-train
-  {F‿G‿H←𝕩⋄F G H}    # 3-train
-  {F‿m←𝕩⋄F _m}       # 4 1-modifier
-  {F‿m‿G←𝕩⋄F _m_ G}  # 5 2-modifier
-⟩
-structFn ← {
-  E←StructErr˙
-  _errIf←{⊢⊘×○(1-𝔽)◶⟨StructErr˙,𝕏⟩}
-  SE ← IsStructErr _errIf⍟(3≥Type)
-
-  _sfn_ ← {(𝕎⊢)◶⟨𝕏, 𝕩‿𝕗‿𝕘{𝕨𝕏𝕗}⟩}
-  Mon←{𝕏⊘E} ⋄ Dy←{E⊘𝕏}
-  k‿v ← Split2 ⟨
-    "⊢⊣˜∘○⊸⟜⊘◶",  ⊢  # ˙ handled specially
-    "=≠≢",        Mon 1 _sfn_ 0
-    "<",          Mon 0 _sfn_ 1
-    "≍",          Mon 1 _sfn_ 1  # Dyad combines
-    "↕/»«⊔",      Dy  1 _sfn_ 1
-    "⥊↑↓⌽⍉⊏⊑",        1 _sfn_ 1
-  # ">",          Mon 2 _sfn_ 1
-  # "∾",          Mon 2 _sfn_ 1  # Dyad combines
-  # "˘⎉¨⌜",
-  # "⚇",
-  ⟩
-  SP ← (Join1 k)_glyphLookup_((k≠⌜⊸Rep v)∾⟨{
-    NS ← 𝕎 _errIf
-    (Type-3˙)◶⟨NS, {m←𝕩⋄{NS(𝕗_m)˙0}}, {m←𝕩⋄{NS(𝕗_m_𝕘)˙0}}⟩ 𝕩
-  }⟩)
-  StructPrim ← {p←SP𝕩⋄𝕨P𝕩}
-
-  Recomp ← (E˙=≥⟜3⊸⊑)◶⟨Recompose,E˙⟩
-
-  0⊸≤◶⟨3,2⊸≤◶⊢‿2⟩∘(0⊑⊢)◶⟨
-    SE ⊣ StructPrim 1⊑⊢           #  0 primitive
-    E˙                            #  1 block
-    DIsConst∘⊢◶⟨0⊸⊑ Recomp {𝕨˙⊸StructFn⌜1↓𝕩}, SE{(1⊑𝕩)˙}⟩  # other operation
-    SE 1⊑⊢                        # ¯1 constant
-  ⟩⟜{Decompose𝕩}
-}
-
 _takeDrop←{
   take ← 1 - 𝕗
   gl   ← 𝕗⊑"↑"‿"↓"
@@ -524,7 +553,7 @@ _takeDrop←{
     l←𝕨p◶⟨0⌈+,⌊⟩≠𝕩
     F←𝕩{(Fill𝕗)˙⌜↕𝕩}
     k←1⋄S←⊢ ⋄ 𝕨⊸{k×´↩c←1 Cell𝕩 ⋄ S↩(⟨(0⌈(≠𝕩)-⊢)⍟(1-take)|𝕨⟩∾c)⊸⥊}⍟(1<=) 𝕩
-    S ((|∘𝕨-≠){𝕩p◶⟨∾˜,∾⟩F𝕨×k}⍟(>⟜0)⊢)⍟take (l×k) (take=p)◶↓‿↑ ⥊𝕩
+    S ((|∘𝕨-≠∘𝕩){𝕩p◶⟨∾˜,∾⟩F𝕨×k}⍟(>⟜0)⊢)⍟take (l×k) (take=p)◶↓‿↑ ⥊𝕩
   }‿{
     ernk ! 1≥=𝕨
     𝕨 ↩ ⥊𝕨
@@ -594,7 +623,8 @@ Windows←{
 EncCell ← {
   f←𝕨↑≢𝕩 ⋄ c←1×´s←𝕨Cell𝕩 ⋄ d←⥊𝕩
   i←s⥊↕c
-  (f⥊{d⊏˜(c×𝕩)⊸+⌜i}⌜↕1×´f)˙_fillBy_{𝕩˙⌜i} 𝕩
+  E←{e←Fill d⊢_fillBy_(0⍟(3≤Type)⊣)↕0 ⋄ (d⊣_fillBy_⊢˜e˙⌜i)Fill𝕩}
+  f⥊ E⍟(0=≠) {d⊏˜(c×𝕩)⊸+⌜i}⌜↕1×´f
 }
 _cells ← {
   F←𝔽 ⋄ _m←{𝔽⌜⊘(𝔽¨)_fillByPure_𝔽○(1⊸EncCell)}
@@ -660,9 +690,44 @@ Group1←{
   SX←((n==𝕩)◶{c←1×´t←n↓s⋄𝕩⊏˜(c⊸×⊸+)⌜⟜(t⥊↕c)}‿{⊏⟜𝕩} ⥊𝕩)∘⊣ _fillBy_ ⊢⟜𝕩
   (SX⟨⟩) Fill dr SX _group ⥊𝕨
 }○ToArray
+GroupM←{
+  "𝕨⊔𝕩: Compound 𝕨 must be a list" ! 1==𝕨
+  n←0+´r←=⌜𝕨
+  "𝕨⊔𝕩: Total rank of 𝕨 must be at most rank of 𝕩" ! n≤=𝕩
+  ld←(Join1≢⌜𝕨)-¨n↑≢𝕩
+  "𝕨⊔𝕩: Lengths of 𝕨 must equal to 𝕩, or one more only in a rank-1 component" ! 1×´ld((0≤⊣)×≤)¨r/1⊸=⌜r
+  dr←r⌊¨(0+_s0 r)⊏ld∾⟨0⟩
+  l←dr-˜⟜≠¨𝕨↩Deshape⌜𝕨 ⋄ LS←∾⟜(n Cell 𝕩) Reshape 𝕩˙
+  S←⊏⟜(LS⟨1×´l⟩)
+  (LS 0⌜𝕨) Fill dr (1≠≠∘⊢)◶⟨
+    S _group○(0⊸⊑)
+    S⌜ ·+⌜⌜´ (Stride l) {𝕨⊸×⌜⌜𝕩}¨ ⊢_group¨
+  ⟩ 𝕨
+}
 GroupGen←{
   "𝕨⊔𝕩: 𝕩 must be an array" ! IsArray 𝕩
   𝕨(2≤≡𝕨)◶Group1‿GroupM𝕩
+}
+
+GroupIndsInv ← {
+  IA 1==𝕩
+  IX 1×´(1==)⌜𝕩
+  j←Join1 𝕩
+  IA 1×´(1≠=)⌜j
+  IX 1×´Nat⌜j
+  {IX𝕨<𝕩⋄𝕨}´⍟(0<≠)⌜𝕩
+  g←GroupLen j
+  IX 1×´≤⟜1⌜g
+  o←/1⊸-⌜g
+  (PermInv j∾o)⊏(/≠⌜𝕩)∾¯1⌜o
+}
+GroupInv ← {
+  IA 1==𝕨
+  IA 1×´Nat⌜𝕨
+  l←GroupLen𝕨
+  IX l=○≠𝕩
+  IX l MatchS ≠⌜𝕩
+  (PermInv l GroupOrd 𝕨) ⊏ Join 𝕩
 }
 
 ValidateRanks←{
@@ -726,59 +791,13 @@ _repeat_←{
 - ↩ - _perv
 ¬ ← 1+-
 
-⥊ ↩ Deshape        ⊘ ⥊
-↕ ↩ Range          ⊘ Windows
-⌽ ← Reverse        ⊘ Rotate
-/ ← Indices        ⊘ Replicate
-» ← ShiftBefore
-« ← ShiftAfter
-
-GroupM←{
-  "𝕨⊔𝕩: Compound 𝕨 must be a list" ! 1==𝕨
-  n←0+´r←=⌜𝕨
-  "𝕨⊔𝕩: Total rank of 𝕨 must be at most rank of 𝕩" ! n≤=𝕩
-  ld←(Join≢⌜𝕨)-n↑≢𝕩
-  "𝕨⊔𝕩: Lengths of 𝕨 must equal to 𝕩, or one more only in a rank-1 component" ! 1∧´(0⊸≤∧≤⟜(r/1=r))ld
-  dr←r⌊(0»+`r)⊏ld∾⟨0⟩
-  l←dr-˜≠⌜𝕨↩⥊⌜𝕨 ⋄ LS←∾⟜(n Cell 𝕩) Reshape 𝕩˙
-  S←⊏⟜(LS⟨1×´l⟩)
-  (LS 0⌜𝕨) Fill dr (1≠≠∘⊢)◶⟨S _group○(0⊸⊑), S⌜ ·+⌜⌜´ (⌽×`1»⌽l) × ⊢_group¨⟩ 𝕨
-}
-
-↑ ↩ Prefixes       ⊘ Take
-↓ ↩ Suffixes       ⊘ Drop
-⊔ ← GroupInds      ⊘ GroupGen
 ⊐ ← SelfClas       ⊘ (1 _search)
-∊ ← ⊢_self         ⊘ (0 _search˜)
 
 ProgressiveIndexOf ← 0 Fill {
   c←1-˜=𝕨
   "⊒: Rank of 𝕨 must be at least 1" ! 0≤c
   "⊒: Rank of 𝕩 must be at least cell rank of 𝕨" ! c≤=𝕩
   𝕨⊐○(⋈¨⟜(≢⥊OccurrenceCount∘⥊) 𝕨⊸⊐)𝕩
-}
-
-ReorderChk←{
-  "𝕨⍉𝕩: 𝕨 must have rank at most 1" ! 1≥=𝕨
-  "𝕨⍉𝕩: Length of 𝕨 must not exceed rank of 𝕩" ! 𝕨≤○≠≢𝕩
-  "𝕨⍉𝕩: 𝕨 must consist of natural numbers" ! 1∧´Nat⌜⥊𝕨
-}
-ReorderAxesSub←{
-  (𝕨⊸⊏Pick𝕩˙)⌜↕⌊´⌜𝕨⊔≢𝕩
-} _fillBy_ ⊢
-ReorderAxes←{
-  𝕨 ReorderChk 𝕩
-  𝕨↩⥊𝕨
-  r←(=𝕩)-0+´¬∊𝕨
-  "𝕨⍉𝕩: Skipped result axis" ! 1∧´𝕨<r
-  (𝕨∾𝕨(¬∘∊˜/⊢)↕r) ReorderAxesSub 𝕩
-}
-ReorderAxesInv←{
-  𝕨 ReorderChk 𝕩
-  𝕨↩⥊𝕨
-  r←=𝕩
-  IA 1∧´(∊∧<⟜r)𝕨
-  (PermInv 𝕨∾𝕨(¬∘∊˜/⊢)↕r) ReorderAxesSub 𝕩
 }
 
 ⁼ ← {Inverse 𝕗}
@@ -799,30 +818,15 @@ FuncInverse ← (0⊸⊑ ⊣◶⟨
 ⟩ ⊢) {Decompose𝕩}
 Inverse ← Type◶(3‿1‿2/{⊢⊣𝕩IX∘≡⊢}‿FuncInverse‿(!∘"Cannot invert modifier"))
 
-∾ ↩ Join           ⊘ JoinTo
 IA ← "⁼: Inverse failed"⊸!
 IX ← "⁼: Inverse does not exist"⊸!
 INF← "⁼: Inverse not found"!0˙
 _invChk_ ← {i←𝕨𝔽𝕩⋄IX 𝕩≡𝕨𝔾i⋄i}
-GroupIndsInv ← {
-  IA 2=≡𝕩
-  IX 1∧´1==⌜𝕩
-  j←∾𝕩
-  IX 1∧´Nat⌜j
-  IX 1∧´j>∾¯1⊸»⌜𝕩
-  g←GroupLen j
-  IX 1∧´g≤1
-  o←/¬g
-  (⍋j∾o)⊏(/≠⌜𝕩)∾¯1⌜o
-}
-GroupInv ← {
-  IA 1==𝕨
-  IA 1∧´Nat⌜𝕨
-  i←⊔𝕨
-  IX i≡○(≠⌜)𝕩
-  i ⍋⊸⊏○∾ 𝕩
-}
+↕ ↩ Range          ⊘ Windows
 ⊏ ↩ FirstCell      ⊘ Select _fillBy_ ⊢
+⌽ ← Reverse        ⊘ Rotate
+↑ ↩ Prefixes       ⊘ Take
+↓ ↩ Suffixes       ⊘ Drop
 PrimInverse ← INF _lookup_ ⟨
   '+', +⊘(-˜)
   '-', -
@@ -861,9 +865,11 @@ SwapInverse ← INF _lookup_ ⟨
 ⟩
 ⌜ ↩ _table
 ¨ ↩ _each
-CheckInv ← (4=0⊸⊑)◶⟨"+-÷⋆√¬"_glyphLookup_(6=↕7)1⊸⊑,¬·'⁼'_isGlyph 2⊸⊑⟩Decompose
+∾ ↩ Join           ⊘ JoinTo
+» ← ShiftBefore
+« ← ShiftAfter
 Mod1Inverse ← INF˙ _lookup_ ⟨
-  '⁼', {𝕏_invChk_(𝕏{i←Inverse𝕗⋄𝕨I𝕩})}⍟CheckInv
+  '⁼', ⊢
   '˜', {SwapInverse𝕩}
   '¨', {𝕏⁼¨                     ⊣·IX 0<≡∘⊢}
   '⌜', {𝕏⁼⌜⊘(IA∘0)              ⊣·IX 0<≡∘⊢}
@@ -875,14 +881,14 @@ Mod1Inverse ← INF˙ _lookup_ ⟨
 Mod2Inverse ← INF˙ _lookup_ ⟨
   '∘', AtopInverse
   '○', {Fi←𝕎⁼⋄𝕏⁼ Fi⊘(𝕏⊸Fi)}
-  '⌾', {𝕎⁼⌾𝕏}  # Need to verify for computation Under
-  '⍟', Int∘⊢◶⟨IA∘0˙,0⊸≤◶{𝕎⍟(-𝕩)_invChk_(𝕎⍟𝕩)}‿{𝕎⍟(-𝕩)}⟩
+  '⌾', {𝕎⁼⌾𝕏}  # Need to verify for computational Under
+  '⍟', Int∘⊢◶⟨IA∘0˙,{𝕎⍟(-𝕩)}⟩
   '⊘', {(𝕎⁼)⊘(𝕏⁼)}
   '⊸', IsConstant∘⊣ ⊣◶{INF⊘𝕏}‿⊢ {𝕎⊸(𝕏⁼)}
   '⟜', {(𝕨IsConstant∘⊢◶⟨IA∘0˙,{𝕩𝕎{SwapInverse𝕗}⊢}⟩𝕩)⊘(𝕏⁼𝕎⁼)}
 ⟩
 
-´ ← _fold
+´ ↩ _fold
 ˝ ← _insert
 ⁼ ↩ {i←Inverse𝕗⋄𝕨I𝕩}
 ˘ ← _cells
@@ -893,6 +899,9 @@ Mod2Inverse ← INF˙ _lookup_ ⟨
 ⥊ ↩ Deshape        ⊘ Reshape
 ≍ ← >∘⋈ _fillBy_ (⊢⊘IF)
 ⋈ ↩ {𝕩Fill⟨𝕩⟩}     ⊘ (⋈○⊑ _fillBy_ IF○<)
+⊔ ← GroupInds      ⊘ GroupGen
 ⍉ ← Transpose      ⊘ ReorderAxes
-⊒ ← OccurrenceCount⊘ ProgressiveIndexOf
+∊ ← ⊢_self         ⊘ (0 _search˜)
 ⍷ ← ∊⊸/            ⊘ Find
+⊒ ← OccurrenceCount⊘ ProgressiveIndexOf
+/ ↩ Indices        ⊘ Replicate

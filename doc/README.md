@@ -9,6 +9,8 @@ Overview:
 - [Types](types.md)
 - [Primitives](primitive.md)
 - [Paradigms](paradigms.md)
+- See also [help index](../help/README.md); [summary gist](https://gist.github.com/dzaima/52b47f898c5d43f72dc2637d6cdadedd)
+- And [system values](../spec/system.md) (not always implemented)
 
 References:
 - [Glossary](glossary.md)
@@ -25,6 +27,7 @@ Concepts:
 - [Array indices](indices.md)
 - [Fill elements](fill.md)
 - [The leading axis model](leading.md)
+- [Tacit programming](tacit.md)
 - [Function trains](train.md)
 - [Blocks](block.md) (including function and modifier definition)
 - [Lexical scoping](lexical.md)
@@ -37,7 +40,7 @@ Primitives:
 - [Arithmetic](arithmetic.md) (`+-×÷⋆√⌊⌈|≤<>≥=≠`)
 - [Array depth](depth.md) (`≡` and `⚇`)
 - [Array dimensions](shape.md) (`≢=≠`)
-- [Assert](assert.md) (`!`)
+- [Assert and Catch](assert.md) (`!` and `⎊`)
 - [Deshape and Reshape](reshape.md) (`⥊`)
 - [Enclose](enclose.md) (`<`)
 - [Find](find.md) (`⍷`)
@@ -69,3 +72,4 @@ Primitives:
 
 Environment:
 - [Embedded BQN](embed.md)
+- [ReBQN](rebqn.md)

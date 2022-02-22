@@ -2,28 +2,9 @@
 
 # BQN community links
 
-<center>
-
-[Advent of Code](https://adventofcode.com/) 2021 is now running! Solutions are being published by:
-
-[Hannu Hartikainen](https://github.com/dancek/bqn-advent2021) •
-[Alex Dikelsky](https://github.com/AlexDikelsky/puzzles/tree/main/advent_of_code/advent_2021) •
-[Dimitri Lozeve](https://github.com/dlozeve/aoc2021) •
-[Antti Keränen](https://github.com/Detegr/aoc2021) •
-[Raghu Ranganathan](https://github.com/razetime/AOC2021-BQN) •
-[Leah Neukirchen](https://github.com/leahneukirchen/adventofcode2021)+[blog](https://leahneukirchen.org/blog/archive/2021/12/counting-lanternfish-with-bqn-and-linear-algebra.html) •
-[Johnny](https://github.com/JohnnyJayJay/adventofcode-21) •
-[frasiyav](https://github.com/frasiyav/AoC2021) •
-[Caleb Quilley](https://gitlab.com/icen/aoc21)
-
-Partial: [Josh Holland](https://git.sr.ht/~jshholland/adventofcode/tree/master/item/2021/) •
-[Alexander Wood](https://github.com/knightzmc/advent-of-code-2021) •
-[Olodus](https://github.com/Olodus/advent_of_code2021) •
-[Ben Dean](https://github.com/bddean/aoc-2021)
-
-</center>
-
 This page gathers links to work by the community. To get in touch, please use our [chat forums](forums.md).
+
+[Advent of Code](https://adventofcode.com/) 2021 is complete: check out the [review and retrospective](aoc.md)!
 
 For code repositories using BQN, see:
 
@@ -51,14 +32,18 @@ And also:
 
 *Links contain the encoded art, which is CC-BY 4.0: see the "setup JS" pane.*
 
+And razetime designed a [desktop background](https://gist.github.com/razetime/22e8161d089afcfb7baa08045e590ef5) based on the BQN logo and character set.
+
 ## Can I help out?
 
 Certainly! There are never enough hours in the day and contributors from beginner to advanced programmers are all welcome. If you're interested I recommend you ask on the forums first to get a feel for what exactly is needed.
 
-You will certainly feel an urge to skip this paragraph and get to the fun stuff, but the most important resource for implementing a language is **testing** and the most valuable one for building a language community is accessible introductions to the language and **learning materials**. These are both very demanding, but if you're willing to put in the work to advance BQN in the most effective way then this is it. One form of documentation that many users would appreciate is short descriptions—a sentence or two with examples—of the primitives for each glyph that can be displayed as help in the REPL. To be honest I'm lousy at making these and would prefer for someone else to do it.
+You will certainly feel an urge to skip this paragraph and get to the fun stuff, but the most important resource for implementing a language is **testing** and the most valuable one for building a language community is accessible introductions to the language and **learning materials**. These are both very demanding, but if you're willing to put in the work to advance BQN in the most effective way then this is it.
 
-Work on BQN's **implementation** generally requires a high level of programming skill. We are focusing development effort on [CBQN](https://github.com/dzaima/CBQN) (see this [source overview](https://github.com/dzaima/CBQN/blob/master/src/README.md)). It's true that the entire compiler and a (decreasing) portion of the runtime is written in BQN, but it would be hard to do much with these as they are very nearly complete, and work satisfactorily. On the other hand, there is a lot that needs to be written in C, including [system values](../spec/system.md) and higher-performance [primitives](../implementation/primitive/README.md). And there's no need to work on *our* implementation! BQN's [specification](../spec/README.md) and [tests](../test/README.txt) are there to make sure you can write a conforming implementation, and extend it with your own ideas. It's also possible to take advantage of the self-hosted BQN sources by writing a [virtual machine](../implementation/vm.md) that allows you to embed BQN in the language of your choice.
+Work on BQN's **implementation** generally requires a high level of programming skill. We're focusing development effort on [CBQN](https://github.com/dzaima/CBQN) (see this [source overview](https://github.com/dzaima/CBQN/blob/master/src/README.md)). It's true that the entire compiler and a (decreasing) portion of the runtime is written in BQN, but it would be hard to do much with these as they are very nearly complete, and work satisfactorily. If you want to try out *another* new language, we're starting to use [Singeli](https://github.com/mlochbaum/Singeli) for [primitive implementations](../implementation/primitive/README.md) because of its low-level control and extensible abstractions. And there's still work to do in C, particularly expanding [system value](../spec/system.md) coverage. We'd also be interested in bringing in typical compiler optimizations like dead code elimination, constant folding, and escape analysis. I'd expect the design of these features to be much like any other IR compiler—or less hard, as BQN is fairly strict about the way variables are used.
 
-Building **libraries** for BQN users can make writing programs in the language much more approachable. You are a better judge of which libraries are needed than I. Port some code from another language, implement some useful functionality in a field you specialize in, or try something new that interests you. A library should be structured as a file (which might load other files) that loads a namespace. This isn't too well-documented now, but see the [namespace documentation](../doc/namespace.md) for hints.
+There's no need to work on *our* implementation! BQN's [specification](../spec/README.md) and [tests](../test/README.txt) are there to make sure you can write a conforming implementation, and extend it with your own ideas. It's also possible to take advantage of the self-hosted BQN sources by writing a [virtual machine](../implementation/vm.md) that allows you to embed BQN in the language of your choice.
 
-Those are possibilities, not limitations. The best way to contribute might be fixing something I never knew was wrong.
+Building **libraries** for BQN users can make writing programs in the language much more approachable. You are a better judge of which libraries are needed than I. Port some code from another language, implement some useful functionality in a field you specialize in, or try something new that interests you. A library should be structured as a file (which might load other files) that loads a namespace. This isn't too well-documented now, but see the [namespace documentation](../doc/namespace.md) for hints, and [bqn-libs](https://github.com/mlochbaum/bqn-libs/) for my work-in-progress vision of what developing one should look like.
+
+Those are possibilities, not limitations. The best contribution is the one that fixes something I didn't even know was wrong.

@@ -2,7 +2,7 @@
 
 # BQN–Dyalog APL dictionary
 
-A few tables to help users of Dyalog APL (or similar) get started quickly on BQN. Here we assume `⎕ML` is 1 for Dyalog.
+A few tables to help users of Dyalog APL (or similar) get started quickly on BQN. For a higher-level comparison, check [Why BQN?](../commentary/why.md#versus-apl-and-j). Here we assume `⎕ML` is 1 for Dyalog.
 
 ## Terminology
 
@@ -62,10 +62,10 @@ Here are some closest equivalents in Dyalog APL for the BQN functions that don't
 | Monad | `*` | `*∘(÷2)` | `[⍋]` | `[⍒]` | `~`   | `≢⍤⍴` | `≢` | `⊂` | `↑` | `⍴` | `,` |
 | Dyad  | `*` | `*∘÷⍨`   | `∧`   | `∨`   | `1+-` | `=`   | `≠` | `<` | `>` | `≢` | `⍴` |
 
-| BQN   | `∾`   | `≍`    | `↑`  | `↓`     | `↕`  | `»`          | `«`           |
-|:-----:|:-----:|:------:|:----:|:-------:|:----:|:------------:|:-------------:|
-| Monad | `⊃,⌿` | `↑,⍥⊂` | `,⍀` | `⌽,⌽⍀⌽` | `⍳`  | `≢↑(¯1-≢)↑⊢` | `-⍤≢↑(1+≢)↑⊢` |
-| Dyad  | `⍪`   | `↑,⍥⊂` | `↑`  | `↓`     | `,⌿` | `≢⍤⊢↑⍪`      | `-⍤≢⍤⊢↑⍪⍨`    |
+| BQN   | `∾`   | `≍`    | `⋈`   | `↑`  | `↓`     | `↕`  | `»`          | `«`           |
+|:-----:|:-----:|:------:|:-----:|:----:|:-------:|:----:|:------------:|:-------------:|
+| Monad | `⊃,⌿` | `↑,⍥⊂` | `,⍥⊂` | `,⍀` | `⌽,⌽⍀⌽` | `⍳`  | `≢↑(¯1-≢)↑⊢` | `-⍤≢↑(1+≢)↑⊢` |
+| Dyad  | `⍪`   | `↑,⍥⊂` | `,⍥⊂` | `↑`  | `↓`     | `,⌿` | `≢⍤⊢↑⍪`      | `-⍤≢⍤⊢↑⍪⍨`    |
 
 | BQN   | `/` | `⍋` | `⍒`   | `⊏`  | `⊑` | `⊐`   | `⊒` | `∊` | `⍷` | `⊔`        |
 |:-----:|:---:|:---:|:-----:|:----:|:---:|:-----:|:---:|:---:|:---:|:----------:|
@@ -104,10 +104,10 @@ The form `F⍣G` (Power with a function right operand; Power limit) must be impl
 <tr><td> <code>↑</code> </td><td> <code>></code>               </td><td> <code>↑</code></td>        </tr>
 <tr><td> <code>↓</code> </td><td> <code><˘</code>              </td><td> <code>↑</code></td>        </tr>
 <tr><td> <code>⊂</code> </td><td> <code><</code>               </td><td> <code>+`⊸⊔</code></td>     </tr>
-<tr><td> <code>⊆</code> </td><td> <code><⍟(0<≡)</code>         </td><td> <code>⊔</code></td>        </tr>
+<tr><td> <code>⊆</code> </td><td> <code><⍟(0<≡)</code>         </td><td> <code>(¬-˜⊢×·+`»⊸>)⊸⊔</code></td></tr>
 <tr><td> <code>∊</code> </td><td> <code>{(∾𝕊¨)⍟(0<≡𝕩)⥊𝕩}</code></td><td> <code>∊</code></td>        </tr>
 <tr><td> <code>⊃</code> </td><td colspan=2><code>⊑</code></td>                                      </tr>
-<tr><td> <code>⍀</code> </td><td>                              </td><td> <code>/⁼</code></td>       </tr>
+<tr><td> <code>⍀</code> </td><td>                              </td><td> <code>{𝕩⌾(𝕨⊸/)𝕨≠⊸↑0↑𝕩}</code></td></tr>
 <tr><td> <code>∩</code> </td><td>                              </td><td> <code>∊/⊣</code></td>      </tr>
 <tr><td> <code>∪</code> </td><td> <code>⍷</code>               </td><td> <code>⊣∾∊˜¬⊸/⊢</code></td> </tr>
 <tr><td> <code>⍳</code> </td><td> <code>↕</code>               </td><td> <code>⊐</code></td>        </tr>
@@ -115,11 +115,11 @@ The form `F⍣G` (Power with a function right operand; Power limit) must be impl
 <tr><td> <code>⍋</code> </td><td> <code>⍋</code>               </td><td> Give up </td>              </tr>
 <tr><td> <code>⍒</code> </td><td> <code>⍒</code>               </td><td> Give up </td>              </tr>
 <tr><td> <code>≢</code> </td><td> <code>≠</code>               </td><td> <code>≢</code></td>        </tr>
-<tr><td> <code>⍎</code> </td><td colspan=2><code>•Eval</code></td>                                  </tr>
+<tr><td> <code>⍎</code> </td><td colspan=2><code>•BQN</code></td>                                   </tr>
 <tr><td> <code>⍕</code> </td><td colspan=2><code>•Fmt</code></td>                                   </tr>
-<tr><td> <code>⊥</code> </td><td>                              </td><td> <code>{+⟜(𝕨⊸×)´⌽𝕩}</code>    </td> </tr>
-<tr><td> <code>⊤</code> </td><td>                              </td><td> <code>{>𝕨|⌊∘÷`⌾⌽𝕨«˜<𝕩}</code></td> </tr>
-<tr><td> <code>⌹</code> </td><td colspan=2><code>+˝∘×⎉1‿∞⁼</code> I guess</td>                      </tr>
+<tr><td> <code>⊥</code> </td><td>                              </td><td> <code>{+⟜(𝕨⊸×)´⌽𝕩}</code>    </td></tr>
+<tr><td> <code>⊤</code> </td><td>                              </td><td> <code>{>𝕨|⌊∘÷`⌾⌽𝕨«˜<𝕩}</code></td></tr>
+<tr><td> <code>⌹</code> </td><td><code>Inverse</code> from <a href="https://github.com/mlochbaum/bqn-libs/blob/master/matrix.bqn">here</a></td><td><code>Solve</code></td></tr>
 <tr><td> <code>⌷</code> </td><td> N/A                          </td><td> <code>⊏</code></td>        </tr>
 </table>
 

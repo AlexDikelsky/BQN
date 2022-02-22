@@ -176,7 +176,7 @@ Markdown ← {filename𝕊𝕩:
   # First we classify each line based on the type of block it can start.
   ClassifyLine ← (0<≠)◶(0‿0)‿{
     ind ← ⊑ lineChars FindGroup ⊏𝕩
-    getLen ← ind ⊑ lineClas∾⟨0˜⟩
+    getLen ← ind ⊑ lineClas∾⟨0⟩
     l ← GetLen 𝕩
     ⟨ind ∧ l>0 ⋄ l⟩
   }
@@ -220,8 +220,9 @@ Markdown ← {filename𝕊𝕩:
       g ← 𝕩∊"←↩"
       (⊑g⊐1) (<⟜(≠g))◶⟨1,¬(" "∾∾idChars)∧´∘∊˜↑⟩ 𝕩
     }
+    ShowErr ← lf∾˜"span class='Error'"Html"Error: "∾(∧`lf⊸≠)⊸/⎊•Repr
     r‿ri ← addRslt◶(⋈˜⟨⟩)‿{
-      ⟨ (ShowRslt ⊣◶⟨"",(⥊∾⟜lf⎉1)∘Fmt∘⊢⟩ CodeExec)⎊("ERROR"∾lf)⍟(0<≠)¨ 𝕩
+      ⟨ (ShowRslt ⊣◶⟨"",(⥊∾⟜lf⎉1)∘Fmt∘⊢⟩ CodeExec)⎊(ShowErr∘•CurrentError)⍟(0<≠)¨ 𝕩
         1 -˜ +` 1 + ≠¨ 𝕩   ⟩ # Don't forget the trailing newline
     } 𝕩
 
@@ -248,19 +249,20 @@ Markdown ← {filename𝕊𝕩:
     tail ← ∧`⌾⌽ trsp∨𝕩='#'  # Mask of trailing hashes
     f ← <⟜« tail            # Character before trailing hashes
     𝕩 /˜↩ ¬ f (⊑⟨"\"," ",""⟩⊐<f/𝕩)◶⟨⊣,⊢,⊢,0¨⊢⟩ tail
-    # Add an id, containing only a-z, digits, and hyphens
+    𝕩 Trim↩
+    # Add an id, usually containing only a-z, digits, and hyphens
     Slugify ← {
       𝕩 ↩ '-'¨⌾((𝕩=' ')⊸/) 𝕩  # Replace spaces with dashes
       bounds ← ⥊ "Aa"+⌜0‿26   # Of the upper and lowercase alphabet
       # Lowercase alphabetic characters and remove special characters
       b ← bounds ⍋ 𝕩
-      ((2|b)∨∊⟜("-"∾'0'+↕10))⊸/ 𝕩+32×1=b
+      ((2|b)∨∊⟜("-𝕊𝕏𝕎𝔽𝔾𝕤𝕩𝕨𝕣𝕗𝕘π⍳"∾'0'+↕10))⊸/ 𝕩+32×1=b
     }
     ExtHtml ← 𝕩{
       s←Slugify 𝕗 ⋄ Q ← """"⊸(∾∾⊣)
       (𝕨 ∾ " id="∾Q s) Html ("a class=""header"" href="∾Q"#"∾s) Html 𝕩
     }
-    tag extensions◶Html‿ExtHtml ProcInline Trim 𝕩
+    tag extensions◶Html‿ExtHtml ProcInline 𝕩
   }⟜⊑
 
   # List items start with a bullet (unordered) or number (ordered).
@@ -368,7 +370,9 @@ Markdown ← {filename𝕊𝕩:
 
     # Links
     ProcLink ← {text 𝕊 target:
-      ∾⟨"<a href=""",AdjustTarget ⥊target,""">",ProcInline text,"</a>"⟩
+      t ← ∾⟨"a",{extensions?'→'≡⊑text?" class=""fulldoc""";""}
+            " href=""",AdjustTarget ⥊target,""""⟩
+      t Html ProcInline text
     }
     ghPath ← blobURL∾path
     AdjustTarget ← {
@@ -410,12 +414,12 @@ Markdown ← {filename𝕊𝕩:
       (m/𝕨) ∾˘ (m/i)⊏𝕩
     }
     # The four bracket indices for each link
-    lInds ← 0‿4⊸⥊⍟(0=≠) JoinPairs○FindPairs˝ brak
+    lInds ← JoinPairs○FindPairs˝ brak
     linkPos ← ⊏˘ lInds
     lInds +⎉1↩ 1‿0‿1‿0
     unused ∧↩ include ∧↩ ¬ ≠` I2M ⥊ (¯1‿1+0‿3⊸⊏)˘ lInds
     linkGroup ← 1 -˜ (⊣×>)○(+`I2M)´ (≠⊸⥊⟜↕∾⊢)⟜2⊸⊔ ⥊lInds
-    links ← ProcLink¨˝˘ ∘‿2 ⥊ linkGroup ⊔ 𝕩
+    links ← ⥊ ProcLink¨˝˘ ∘‿2 ⥊ linkGroup ⊔ 𝕩
 
     # Emphasis (still rudimentary)
     eMasks ← (unused ∧ 𝕩⊸=)¨ "*_"
@@ -543,13 +547,15 @@ idChars ← ⟨
 
 # Return BQN highlights for an string 𝕩, as an ⟨add,pos⟩ list for Modify
 # (include will be all 1s).
+# 𝕨 indicates a character from 𝕩 is a divider, which ends comments and
+# can't be contained in string literals.
 hlchars‿classTag ← {
   func‿mod1‿mod2 ← •Import "src/glyphs.bqn"
   # Characters used by BQN, and the HTML class they are associated with.
   classes‿chars ← <˘ ⍉ ∘‿2⥊⟨
     0             , " "∾@+9‿10  # Should never be highlighted
     "Value"       , "𝕨𝕩𝕗𝕘𝕤"
-    "Function"    , func∾¯1⊏˘5‿2⥊"𝕎𝕏𝔽𝔾𝕊"
+    "Function"    , func∾"𝕎𝕏𝔽𝔾𝕊"
     "Modifier"    , mod1
     "Modifier2"   , mod2
     "Number"      , ∾idChars       # Will be classified among ↑↑ later
@@ -557,6 +563,7 @@ hlchars‿classTag ← {
     "Paren"       , "()"
     "Bracket"     , "⟨⟩"
     "Brace"       , "{}"
+    "Head"        , ":;?"
     "Ligature"    , "‿"
     "Nothing"     , "·"
     "Separator"   , "⋄,"
@@ -574,17 +581,19 @@ GetHighlights ← {
 
   # Locate comments and strings.
   c ← 𝕩='#'
-  le← /(𝕩=lf)∾1
+  le← / (𝕨 ⊢⊘∨ 𝕩=lf) ∾ 1
   # Line endings (le) end every comment (/c) on the line, so take a copy
   # for each # before that line but not the previous.
   ce← le /˜ -⟜» c/⊸⍋le
   # A single quote can only be used if there's another two places down.
   s ← /0‿0⊸«⊸∧𝕩='''
   d ← /𝕩='"'
-  css ← ⟨ s   ⋄ ¯1↓d ⋄ /c ⟩ # Comment or string start
-  cse ← ⟨ 2+s ⋄  1↓d ⋄ ce ⟩ # Corresponding end indices
+  css ← ∾ ⟨ s   ⋄ ¯1↓d ⋄ /c ⟩ # Comment or string start
+  cse ← ∾ ⟨ 2+s ⋄  1↓d ⋄ ce ⟩ # Corresponding end indices
+  # If 𝕨 is given, filter out strings with ends in different divisions.
+  {css‿cse <∘=○(⊏⟜(+`0∾𝕩))´⊸(/¨)↩} 𝕨
   # Now b is a table of (start,end) pairs
-  b ← css Trace○∾ cse
+  b ← css Trace cse
   # Given a list of pairs, get a mask indicating included regions
   ToMask ← (≠`∨⊢) (≠𝕩)↑/⁼∘∾
   # Split rows and group into text‿comments
@@ -604,21 +613,28 @@ GetHighlights ← {
   col↩ («col) ⊣⌾((id«⊸∧𝕩='•')⊸/) col
 
   # Tags are placed at boundaries between different colors
-  boundary ← ¯1⊸»⊸≠ col
+  boundary ← (»𝕨) ⊢⊘∨ ¯1⊸»⊸≠ col
   bcol ← boundary / col
   # Windows gives us rows of start,end where the end position of one
   # color is the start of the next
   # Subtract one to place before the starting character
-  pos ← 2 ↕ 1-˜/boundary∾1
+  bp  ← 1-˜/boundary∾1
+  # Comments naturally end on dividers but need to stop before them
+  pos ← (-0‿1∧⌜˜(1↓bp)⊏𝕨) + 2↕bp
   # Remove class 0 regions, as these don't use tags
   (⥊ (0<bcol)⊸/)¨ ⟨bcol⊏classTag, pos⟩
 }
 
 # Return highlights for areas in 𝕩 where 𝕨 is true.
+# Highlights all regions at once with a ' ' divider before each.
 GetMultiHighlights ← {
-  start ← »⊸< 𝕨
-  groups ← (1 -˜ 𝕨 × +` start) ⊔ 𝕩
-  <∘∾˘ ⍉ ((≠≍2˙) ⥊ ·> (/start) {𝕨⊸+⌾(1⊸⊑)𝕩}⟜GetHighlights¨ ⊢) groups
+  ¬∨´𝕨 ? ⋈˜⟨⟩ ;      # No code → no highlights
+  mask ← «⊸∨ 𝕨       # Places to highlight, including dividers
+  div  ← ¬ mask / 𝕨  # Indicate the dividers
+  c‿pos ← div GetHighlights ' '¨⌾(div⊸/) mask / 𝕩
+  # Add an adjustment that expands dividers back to original size
+  adj ← div ((1-˜⍋⟜pos) ⊏ -˜)○/ mask > 𝕨
+  ⟨c, pos + adj⟩
 }
 
 
@@ -648,12 +664,13 @@ ConvertFile ← {
   isInd ← "README" ≡ ¯1⊑parts
   RQ ← {'"'¨⌾(('''=𝕩)⊸/)𝕩}
   Link ← RQ {∾⟨"<link href='",root,𝕩,"' rel='",𝕨,"'/>"⟩}
+  Clean ← "`` ` ``"⊸⍷ ∨´∘⊣◶⟨'`'⊸≠⊸/⊢,≠⊸(1≠`-⊸↑≠↑)˜/⊢⟩ ⊢  # Help pages have backticks in titles
   h1 ← (2≤≠)◶0‿("# "≡2⊸↑)¨⊸/md
   "Wrong number of titles in "‿𝕩 ∾⊸! 1=≠h1
   head ← "head" Html lf∾JoinLines "  "⊸∾¨⟨
     "shortcut icon' type='image/x-icon" Link "favicon.ico"
     "stylesheet" Link "style.css"
-    "title" Html ("BQN"∾":"⊸(¬∘∊/⊣)∾" "∾⊢)⍟(¬·∨´"BQN"⍷⊢) 2↓⊑h1
+    "title" Html ("BQN"∾":"⊸(¬∘∊/⊣)∾" "∾⊢)⍟(¬·∨´"BQN"⍷⊢) Clean 2↓⊑h1
   ⟩
   repo ← "("∾")"∾˜ "a href='"‿repoURL‿"'" ∾⊸Html "github"
   crumbs ← up ("a href='"∾∾⟜"index.html'")⊸Html¨○((-isInd)⊸↓) (<"BQN")»parts

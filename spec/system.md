@@ -187,7 +187,7 @@ Each function in this section is monadic.
 
 `•Source` gives a string containing a block's source, including the enclosing braces `{}`. It causes an error if the argument is not a block. In contrast to `•Glyph`, this function does not give full information about `𝕩` because the result cannot convey environment or mutable identity.
 
-`•Decompose` breaks down one level of a compound function or modifier, returning a list with a code giving what kind of structure it has (as listed in the table below) followed by each of its components. "Other" includes blocks and system functions. Non-operations do not cause an error, but return code -1, then the argument as a single component. The result is thus a list of length 2 to 4, and `•Decompose` cannot cause an error.
+`•Decompose` breaks down one level of a compound function, returning a list with a code giving what kind of structure it has followed by each of its components. Possible codes are listed in the table below according to the rule that forms the derived function—train or 2-modifier application. Non-function values, and some functions, can't be broken down. They are still classified with a code: -1 for a non-operation, 0 for a primitive, and 1 for other operations. "Other" includes blocks and system operations. The result is thus a list of length 2 to 4, and `•Decompose` cannot cause an error.
 
 | Kind          | Code | Components
 |---------------|------|-----------
@@ -217,6 +217,16 @@ The [Unix epoch](https://en.wikipedia.org/wiki/Unix_time) is 1970-01-01 00:00:00
 
 More accurately the modifier `•_maxTime_` *may* fail if execution of `𝔽` takes over `𝕨𝔾𝕩` seconds, and should fail as quickly as it is practically able to. The most likely way to implement this modifier is to interrupt execution at the given time. If `𝔽` completes before the interrupt there is no need to measure the amount of time it actually took.
 
+## Math
+
+System namespace `•math` contains mathematical utilities that are not easily implemented with basic arithmetic, analogous to C's `math.h`.
+
+Constants `ln10⇐⋆⁼10`, `ln2⇐⋆⁼2`, `log10e⇐÷⋆⁼10`, `log2e⇐÷⋆⁼2` computed in full precision.
+
+Other correctly-rounded arithmetic: monadic `Cbrt⇐3⊸√`, `Log2⇐2⋆⁼⊢`, `Log10⇐10⋆⁼⊢`, `Log1p⇐⋆⁼1⊸+`, `Expm1⇐1-˜⋆`; dyadic `Hypot⇐+⌾(×˜)`.
+
+Standard trigonometric functions `Sin`, `Cos`, `Tan`, `Sinh`, `Cosh`, `Tanh`, with inverses preceded by `a` (`ASin`, etc.) and accessable with `⁼`. Additionally, the dyadic function `ATan2` giving the angle of vector `𝕨‿𝕩` relative to `1‿0`. All trig functions measure angles in radians.
+
 ## Random generation
 
 `•MakeRand` initializes a deterministic pseudorandom number generator with seed value `𝕩`. `•rand`, if it exists, is a globally accessible generator initialized at first use; this initialization should use randomness from an outside source if available. These random generators aren't required to be cryptographically secure and should always be treated as insecure. A random generator has the following member functions:
@@ -234,3 +244,46 @@ When `𝕨` isn't given, `Deal`'s result contains all elements of `↕𝕩`, mak
 In `Range`, `𝕩` may be `0`. In this case the result consists of floating-point numbers in the unit interval from 0 to 1. The numbers should have an overall uniform distribution, but their precision and whether the endpoints 0 and 1 are possible may depend on the implementation.
 
 Ranges up to `2⋆32` must be supported (that is, a maximum integer result of `(2⋆32)-1`) if the number system accommodates it. In implementations based on double-precision floats it's preferable but not required to support ranges up to `2⋆53`.
+
+## Bitwise operations
+
+The system namespace `•bits` gives functions for efficiently applying bitwise and two's complement integer operations to arrays of data. These functions should compute result values with native CPU instructions, preferably SIMD if available.
+
+| Name     | Args | Type     | Behavior
+|----------|------|----------|---------
+| `_not`   | 1    | bit      | `¬`
+| `_and`   | 2    | bit      | `∧`
+| `_or`    | 2    | bit      | `∨`
+| `_xor`   | 2    | bit      | `≠`
+| `_neg`   | 1    | integer  | `-`
+| `_add`   | 2    | integer  | `+`
+| `_sub`   | 2    | integer  | `-`
+| `_mul`   | 2    | integer  | `×`
+| `_mulu`  | 2    | unsigned | `×`
+
+An operation is exposed as a 1-modifier that takes up to four numbers for its operand.
+- Operation width
+- Result element width
+- Right argument element width
+- Left argument element width
+The operand is extended to length 3 for monadic operations, and 4 for dyadic operations, by repeating the last element (like `»⟜(4⥊⊢´)`). It must be a number, or array of numbers with rank at most 1.
+
+An example call is `a 16‿1•bit._add b`, to perform 16-bit additions on two boolean arrays with a boolean result.
+
+To apply a bitwise operation, each argument is represented as a stream of bits based on the width given for it, then split into units whose width is the operation width. The operation is applied to these units. The result is again treated as a stream of bits and split according to the result width, with each unit forming a result element.
+
+The operation width, along with the "Type" column above, determines what operation is performed. For bit operations it has no effect, except to constrain the argument sizes according to the shape rules below. Integer (meaning signed) and unsigned operations support widths of 8 and above, and should support higher values such as 128 if available.
+
+Argument and result widths correspond to little-endian binary representations according to the following table (operation widths don't—see the "type" field in the table above). Here "boolean" indicates value 0 or 1, "signed integer" indicates two's complement representation, and "character" is a code point in an unsigned representation. Either type may be used for an argument, but the result will always use a primary type.
+
+| Width | Primary type    | Also
+|-------|-----------------|------
+| 1     | Boolean         |
+| 8     | Signed integer  | Character
+| 16    | Signed integer  | Character
+| 32    | Signed integer  | Character
+| 64    | IEEE 754 double |
+
+An argument must be an array of numbers or an array of characters. Its elements must fit into the appropriate type. The "cell size" is the length in bits of a 1-cell, that is, `width×¯1⊑1∾≢arg`, and must be a multiple of the operation width. Both arguments must have the same cell size, and the same leading shape `¯1↓≢arg`. The result shape is this leading shape followed by the cell size divided by the result element width.
+
+Another tool is provided for performing direct conversions, with no operation applied. The 1-modifier `•bit._cast` takes a two-element operand and one argument, for example `⟨8,16‿'c'⟩•bit._cast ints` to convert each pair of numbers in `ints` into a 2-byte character. Each element of `𝕗` is a number or number-character pair giving width and type. The argument is encoded according to the first and decoded according to the second.

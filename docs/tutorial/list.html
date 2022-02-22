@@ -78,11 +78,13 @@
 <span class='Number'>2</span><span class='Ligature'>‿</span><span class='Function'>+</span><span class='Ligature'>‿</span><span class='Function'>-</span>
 </pre>
 <p>Strand notation is shorter and looks less cluttered in this example. As with lists, anything goes in a strand, but if it's the result of a function or operator, or another strand, then it has to be put in parentheses first. With one set of parentheses, a strand will be just as long as the equivalent bracketed list, and with two you're better off using the list.</p>
-<p>An individual ligature part of BQN syntax, not a value, and it doesn't do something specific like a function does. It's the sequence of ligatures that makes whatever they join together into a list. So if we parenthesize either ligature below, we get a different result! Ligatures aren't right-associative or left-associative.</p>
-<a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=MOKAvzHigL8yCigw4oC/MSnigL8yCjDigL8oMeKAvzIp">↗️</a><pre>    <span class='Number'>0</span><span class='Ligature'>‿</span><span class='Number'>1</span><span class='Ligature'>‿</span><span class='Number'>2</span>
+<p>An individual ligature is part of BQN syntax, not a value, and it doesn't do something specific like a function does. It's the sequence of ligatures that makes whatever they join together into a list. So if we parenthesize either ligature below, we get a different result! Ligatures aren't right-associative or left-associative.</p>
+<a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=MOKAvzHigL8yCgooMOKAvzEp4oC/MgoKMOKAvygx4oC/Mik=">↗️</a><pre>    <span class='Number'>0</span><span class='Ligature'>‿</span><span class='Number'>1</span><span class='Ligature'>‿</span><span class='Number'>2</span>
 ⟨ 0 1 2 ⟩
+
     <span class='Paren'>(</span><span class='Number'>0</span><span class='Ligature'>‿</span><span class='Number'>1</span><span class='Paren'>)</span><span class='Ligature'>‿</span><span class='Number'>2</span>
 ⟨ ⟨ 0 1 ⟩ 2 ⟩
+
     <span class='Number'>0</span><span class='Ligature'>‿</span><span class='Paren'>(</span><span class='Number'>1</span><span class='Ligature'>‿</span><span class='Number'>2</span><span class='Paren'>)</span>
 ⟨ 0 ⟨ 1 2 ⟩ ⟩
 </pre>
@@ -136,10 +138,10 @@
 <h2 id="some-list-functions"><a class="header" href="#some-list-functions">Some list functions</a></h2>
 <table class='primitives'>
   <tr>
-    <td><span class='Function'>≍</span></td>
+    <td><span class='Function'>⋈</span></td>
     <td><kbd>\.</kbd></td>
-    <td>Solo</td>
-    <td>Couple</td>
+    <td>Enlist</td>
+    <td>Pair</td>
   </tr>
   <tr>
     <td><span class='Function'>∾</span></td>
@@ -156,11 +158,11 @@
 </table>
 
 <p>Let's introduce a few primitives to work with lists.</p>
-<p>Make one or two atom arguments into a list with <code><span class='Function'>≍</span></code>, pronounced Solo in the one-argument case and Couple in the two-argument case. This might not seem to merit a symbol but there's more to come. Don't call it on lists and ponder the results, igniting a hunger for ever more dimensions.</p>
-<a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=4omNIDQKCjIg4omNIDQ=">↗️</a><pre>    <span class='Function'>≍</span> <span class='Number'>4</span>
-⟨ 4 ⟩
+<p>Make one or two arguments into a list with <code><span class='Function'>⋈</span></code>, pronounced Enlist in the one-argument case and Pair in the two-argument case. This is kind of the same thing as list notation, and in fact I'd write the two examples below as list literals. But BQN is set up to get the most out of functions, so it's very useful to have a function version of that special syntax for lists built in.</p>
+<a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=4ouIICJlbHQiCgoyIOKLiCA0">↗️</a><pre>    <span class='Function'>⋈</span> <span class='String'>&quot;elt&quot;</span>
+⟨ "elt" ⟩
 
-    <span class='Number'>2</span> <span class='Function'>≍</span> <span class='Number'>4</span>
+    <span class='Number'>2</span> <span class='Function'>⋈</span> <span class='Number'>4</span>
 ⟨ 2 4 ⟩
 </pre>
 <p>Concatenate lists with Join To (<code><span class='Function'>∾</span></code>). The little chain link symbol—technically &quot;inverted lazy S&quot;—is my favorite in BQN. Hook those lists together!</p>
@@ -173,7 +175,7 @@
     <span class='String'>&quot;plural&quot;</span> <span class='Function'>∾</span> <span class='String'>'s'</span>
 "plurals"
 </pre>
-<p>The last two examples show that you can join a list to an atom, making it the first or last element of the result. This is a little suspect because if you decide the data being stored is more complicated and start using a list instead of an atom, then it will no longer be used as a single element but rather a subsection of the result. So I would only use that shortcut for something like a numeric literal that's clearly an atom and will stay that way, and otherwise wrap those atomic arguments in some <code><span class='Bracket'>⟨⟩</span></code> brackets. Join will even work with two atoms, but in that case I'd say it makes more sense to use Couple instead.</p>
+<p>The last two examples show that you can join a list to an atom, making it the first or last element of the result. This is a little suspect because if you decide the data being stored is more complicated and start using a list instead of an atom, then it will no longer be used as a single element but rather a subsection of the result. So I would only use that shortcut for something like a numeric literal that's clearly an atom and will stay that way, and otherwise wrap those atomic arguments in some <code><span class='Bracket'>⟨⟩</span></code> brackets. Join will even work with two atoms, but in that case it makes more sense to use Pair instead.</p>
 <p>Reverse (<code><span class='Function'>⌽</span></code>) puts the list back to front.</p>
 <a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=4oy9ICJkcmF3ZXIi">↗️</a><pre>    <span class='Function'>⌽</span> <span class='String'>&quot;drawer&quot;</span>
 "reward"
@@ -205,13 +207,13 @@
 </table>
 
 <p>The 1-modifier Each (<code><span class='Modifier'>¨</span></code>) applies its operand to every element of a list argument: it's the same as <code><span class='Value'>map</span></code> in a functional programming language. With two list arguments (which have to have the same length), Each pairs the corresponding elements from each, a bit like a <code><span class='Value'>zip</span></code> function. If one argument is a list and one's an atom, the atom is reused every time instead.</p>
-<a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=4oy9wqggImFiY2Qi4oC/IkFCQ0RFRiLigL8iMDEiCgoic3RyaW5nIuKAvyJsaXN0IuKAvyJhcnJheSIg4oi+wqggJ3MnCgoiYWJjIiDiiY3CqCDijL0gImFiYyI=">↗️</a><pre>    <span class='Function'>⌽</span><span class='Modifier'>¨</span> <span class='String'>&quot;abcd&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;ABCDEF&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;01&quot;</span>
+<a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=4oy9wqggImFiY2Qi4oC/IkFCQ0RFRiLigL8iMDEiCgoic3RyaW5nIuKAvyJsaXN0IuKAvyJhcnJheSIg4oi+wqggJ3MnCgoiYWJjIiDii4jCqCDijL0gImFiYyI=">↗️</a><pre>    <span class='Function'>⌽</span><span class='Modifier'>¨</span> <span class='String'>&quot;abcd&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;ABCDEF&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;01&quot;</span>
 ⟨ "dcba" "FEDCBA" "10" ⟩
 
     <span class='String'>&quot;string&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;list&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;array&quot;</span> <span class='Function'>∾</span><span class='Modifier'>¨</span> <span class='String'>'s'</span>
 ⟨ "strings" "lists" "arrays" ⟩
 
-    <span class='String'>&quot;abc&quot;</span> <span class='Function'>≍</span><span class='Modifier'>¨</span> <span class='Function'>⌽</span> <span class='String'>&quot;abc&quot;</span>
+    <span class='String'>&quot;abc&quot;</span> <span class='Function'>⋈</span><span class='Modifier'>¨</span> <span class='Function'>⌽</span> <span class='String'>&quot;abc&quot;</span>
 ⟨ "ac" "bb" "ca" ⟩
 </pre>
 <p>Fold (<code><span class='Modifier'>´</span></code>) is the higher-order function also known as reduce or accumulate. It applies its operand function between each pair of elements in a list argument. For example, <code><span class='Function'>+</span><span class='Modifier'>´</span></code> gives the sum of a list and <code><span class='Function'>×</span><span class='Modifier'>´</span></code> gives its product.</p>
@@ -232,7 +234,7 @@
 <a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=4oi+wrQg4p+oICJjb24iLCAiY2F0IiwgImVuYXQiLCAiZSIg4p+p">↗️</a><pre>    <span class='Function'>∾</span><span class='Modifier'>´</span> <span class='Bracket'>⟨</span> <span class='String'>&quot;con&quot;</span><span class='Separator'>,</span> <span class='String'>&quot;cat&quot;</span><span class='Separator'>,</span> <span class='String'>&quot;enat&quot;</span><span class='Separator'>,</span> <span class='String'>&quot;e&quot;</span> <span class='Bracket'>⟩</span>
 "concatenate"
 </pre>
-<p>But you shouldn't! Just <code><span class='Function'>∾</span></code> will do the job for you—with no left argument it's just called &quot;Join&quot; (it's like Javascript's <code><span class='Value'>.join</span><span class='Paren'>()</span></code>, but with no separator and not specific to strings). And it could do more jobs if you had more dimensions. But I'm sure that's the furthest thing from your mind.</p>
+<p>But you shouldn't! Just <code><span class='Function'>∾</span></code> will do the job for you—with no left argument it's just called &quot;Join&quot; (it's like Javascript's <code><span class='Value'>.join</span><span class='Paren'>()</span></code>, but with no separator and not specific to strings). And it could do more jobs if you had more dimensions. But let's not push it.</p>
 <a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=4oi+IOKfqCAiY29uIiwgImNhdCIsICJlbmF0IiwgImUiIOKfqQ==">↗️</a><pre>    <span class='Function'>∾</span> <span class='Bracket'>⟨</span> <span class='String'>&quot;con&quot;</span><span class='Separator'>,</span> <span class='String'>&quot;cat&quot;</span><span class='Separator'>,</span> <span class='String'>&quot;enat&quot;</span><span class='Separator'>,</span> <span class='String'>&quot;e&quot;</span> <span class='Bracket'>⟩</span>
 "concatenate"
 </pre>
@@ -258,7 +260,7 @@
 ⟨ 0 1 2 3 4 5 6 7 ⟩
 </pre>
 <p>Natural numbers in BQN start at 0. I'll get to the second function in a moment, but first let's consider how we'd decode just one number in binary. I'll pick a smaller one: 9 is 1001 in binary. Like the first 1 in decimal 1001 counts for one thousand or <code><span class='Number'>10</span><span class='Function'>⋆</span><span class='Number'>3</span></code>, the first one in binary 1001 counts for 8, which is <code><span class='Number'>2</span><span class='Function'>⋆</span><span class='Number'>3</span></code>. We can put each number next to its place value like this:</p>
-<a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=OOKAvzTigL8y4oC/MSDiiY3CqCAx4oC/MOKAvzDigL8x">↗️</a><pre>    <span class='Number'>8</span><span class='Ligature'>‿</span><span class='Number'>4</span><span class='Ligature'>‿</span><span class='Number'>2</span><span class='Ligature'>‿</span><span class='Number'>1</span> <span class='Function'>≍</span><span class='Modifier'>¨</span> <span class='Number'>1</span><span class='Ligature'>‿</span><span class='Number'>0</span><span class='Ligature'>‿</span><span class='Number'>0</span><span class='Ligature'>‿</span><span class='Number'>1</span>
+<a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=OOKAvzTigL8y4oC/MSDii4jCqCAx4oC/MOKAvzDigL8x">↗️</a><pre>    <span class='Number'>8</span><span class='Ligature'>‿</span><span class='Number'>4</span><span class='Ligature'>‿</span><span class='Number'>2</span><span class='Ligature'>‿</span><span class='Number'>1</span> <span class='Function'>⋈</span><span class='Modifier'>¨</span> <span class='Number'>1</span><span class='Ligature'>‿</span><span class='Number'>0</span><span class='Ligature'>‿</span><span class='Number'>0</span><span class='Ligature'>‿</span><span class='Number'>1</span>
 ⟨ ⟨ 8 1 ⟩ ⟨ 4 0 ⟩ ⟨ 2 0 ⟩ ⟨ 1 1 ⟩ ⟩
 </pre>
 <p>To get the value we multiply each number by its place value and then add them up.</p>
@@ -281,7 +283,7 @@
 <p>Lot of functions up there. Notice how I need to use parentheses for the left argument of a function if it's compound, but never for the right argument, and consequently never with a one-argument function.</p>
 <svg viewBox='-131.34 -34 512 210'>
   <g font-family='BQN,monospace' font-size='18px' class='Paren' fill='currentColor'>
-    <rect class='code' stroke-width='1' rx='10' x='-2948.48' y='-1536' width='292.68' height='190'/>
+    <rect class='code' stroke-width='1' rx='10' x='-21.68' y='-24' width='292.68' height='190'/>
     <text><tspan class='Function'>+</tspan><tspan class='Modifier'>´</tspan> <tspan class='Paren'>(</tspan><tspan class='Function'>⌽</tspan><tspan class='Number'>2</tspan><tspan class='Function'>⋆</tspan><tspan class='Function'>↕</tspan><tspan class='Number'>4</tspan><tspan class='Paren'>)</tspan> <tspan class='Function'>×</tspan> <tspan class='String'>&quot;1001&quot;</tspan><tspan class='Function'>-</tspan><tspan class='String'>'0'</tspan></text>
     <path stroke='currentColor' fill='none' stroke-width='1' d='M233.06 1.9V20.9H211.38'/>
     <path stroke='currentColor' fill='none' stroke-width='1' d='M173.44 1.9V20.9H211.38'/>
@@ -297,30 +299,30 @@
     <path stroke='currentColor' fill='none' stroke-width='1' d='M16.26 134.9V153.9H-8.13'/>
     <g font-size='15px' text-anchor='middle'>
       <g class='codeCover' stroke-width='8' stroke-linejoin='round'>
-        <text x='31696.16' y='1664'>'0'</text>
-        <text x='28747.68' y='1664'>-</text>
-        <text x='23587.84' y='1664'>&quot;1001&quot;</text>
-        <text x='16953.76' y='6528'>×</text>
-        <text x='12531.04' y='2880'>4</text>
-        <text x='11056.8' y='2880'>↕</text>
-        <text x='9582.56' y='4096'>⋆</text>
-        <text x='8108.32' y='4096'>2</text>
-        <text x='6634.08' y='5312'>⌽</text>
-        <text x='2211.36' y='7744'>´</text>
-        <text x='737.12' y='7744'>+</text>
+        <text x='233.06' y='26'>'0'</text>
+        <text x='211.38' y='26'>-</text>
+        <text x='173.44' y='26'>&quot;1001&quot;</text>
+        <text x='124.66' y='102'>×</text>
+        <text x='92.14' y='45'>4</text>
+        <text x='81.3' y='45'>↕</text>
+        <text x='70.46' y='64'>⋆</text>
+        <text x='59.62' y='64'>2</text>
+        <text x='48.78' y='83'>⌽</text>
+        <text x='16.26' y='121'>´</text>
+        <text x='5.42' y='121'>+</text>
       </g>
       <g opacity='0.9'>
-        <text x='31696.16' y='1664'><tspan class='String'>'0'</tspan></text>
-        <text x='28747.68' y='1664'><tspan class='Function'>-</tspan></text>
-        <text x='23587.84' y='1664'><tspan class='String'>&quot;1001&quot;</tspan></text>
-        <text x='16953.76' y='6528'><tspan class='Function'>×</tspan></text>
-        <text x='12531.04' y='2880'><tspan class='Number'>4</tspan></text>
-        <text x='11056.8' y='2880'><tspan class='Function'>↕</tspan></text>
-        <text x='9582.56' y='4096'><tspan class='Function'>⋆</tspan></text>
-        <text x='8108.32' y='4096'><tspan class='Number'>2</tspan></text>
-        <text x='6634.08' y='5312'><tspan class='Function'>⌽</tspan></text>
-        <text x='2211.36' y='7744'><tspan class='Modifier'>´</tspan></text>
-        <text x='737.12' y='7744'><tspan class='Function'>+</tspan></text>
+        <text x='233.06' y='26'><tspan class='String'>'0'</tspan></text>
+        <text x='211.38' y='26'><tspan class='Function'>-</tspan></text>
+        <text x='173.44' y='26'><tspan class='String'>&quot;1001&quot;</tspan></text>
+        <text x='124.66' y='102'><tspan class='Function'>×</tspan></text>
+        <text x='92.14' y='45'><tspan class='Number'>4</tspan></text>
+        <text x='81.3' y='45'><tspan class='Function'>↕</tspan></text>
+        <text x='70.46' y='64'><tspan class='Function'>⋆</tspan></text>
+        <text x='59.62' y='64'><tspan class='Number'>2</tspan></text>
+        <text x='48.78' y='83'><tspan class='Function'>⌽</tspan></text>
+        <text x='16.26' y='121'><tspan class='Modifier'>´</tspan></text>
+        <text x='5.42' y='121'><tspan class='Function'>+</tspan></text>
       </g>
     </g>
   </g>
@@ -336,7 +338,7 @@
 </pre>
 <p>Multiplication is harder, and if we try to multiply by the place value list directly it doesn't go so well.</p>
 <a class="replLink" title="Open in the REPL" target="_blank" href="https://mlochbaum.github.io/BQN/try.html#code=KOKMvTLii4bihpU4KSDDlyAnMCcgLcucICIwMTAwMTExMCLigL8iMDExMDAxMDEi4oC/IjAxMTEwMDEwIuKAvyIwMTEwMDEwMCLigL8iMDAxMDAwMDEi">↗️</a><pre>    <span class='Paren'>(</span><span class='Function'>⌽</span><span class='Number'>2</span><span class='Function'>⋆↕</span><span class='Number'>8</span><span class='Paren'>)</span> <span class='Function'>×</span> <span class='String'>'0'</span> <span class='Function'>-</span><span class='Modifier'>˜</span> <span class='String'>&quot;01001110&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;01100101&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;01110010&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;01100100&quot;</span><span class='Ligature'>‿</span><span class='String'>&quot;00100001&quot;</span>
-ERROR
+<span class='Error'>Error: ×: Expected equal shape prefix (⟨8⟩ ≡ ≢𝕨, ⟨5⟩ ≡ ≢𝕩)</span>
 </pre>
 <p>This is because the list on the left has length 8 while the list on the right has length 5. The <em>elements</em> of the list on the right have length 8, but BQN can't be expected to know you want to connect the two arguments in that particular way. Especially considering that if you happen to have 8 characters then the right argument <em>will</em> have length 8!</p>
 <p>There are a few ways to handle this. What we'll do is <em>bind</em> the place values to <code><span class='Function'>×</span></code> using the 2-modifier <code><span class='Modifier2'>⊸</span></code>. This modifier attaches a left argument to a function.</p>
@@ -410,9 +412,9 @@ ERROR
 <td><a href="../doc/join.html">Join To</a></td>
 </tr>
 <tr>
-<td><code><span class='Function'>≍</span></code></td>
-<td><a href="../doc/couple.html">Solo</a></td>
-<td><a href="../doc/couple.html">Couple</a></td>
+<td><code><span class='Function'>⋈</span></code></td>
+<td><a href="../doc/pair.html">Enlist</a></td>
+<td><a href="../doc/pair.html">Pair</a></td>
 </tr>
 <tr>
 <td><code><span class='Function'>⌽</span></code></td>

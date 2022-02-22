@@ -29,7 +29,8 @@ _tmpl←{∾𝕗{𝕎𝕩}¨<𝕩} # Template
 CharCode←charSet{
   ErrUnknownChars←!⟨"Unknown character"⊸Pl,": ",⊢⟩_tmpl
   Chk ← ⊢⊣ErrUnknownChars∘(≠/⊣)⍟≢⟜(⊏⟜𝕗)
-  g←⍋𝕗 ⋄ ⊢ Chk g⊏˜1-˜1⌈(g⊏𝕗)⍋⊢
+  (! "Character set conflict: "∾gf/˜0⊸∾)⍟(∨´) 1(↓=-⊸↓)gf←(g←⍋𝕗)⊏𝕗
+  ⊢ Chk g⊏˜1-˜1⌈gf⍋⊢
 }
 swap_undo←CharCode∊⟜mod1⊸/"˜⁼"
 
@@ -122,10 +123,12 @@ ReadNums←{
 
 Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   ErrMismatchedBrackets←{
-    Lcs ← ∧○(0<≠)◶⟨0, ¯1 ⊑ 0¨∘⊢ {𝕩⌈⌈`𝕨+»𝕩}˝ =⌜⟜⌽⟩
-    _mis_ ← {"Missing "∾𝕗∾" "∾charSet⊏˜𝕘+⊢/˜≠∘⊣=⊒}
-    Msg ← >○≠◶⟨"opening"_mis_ 0, "closing"_mis_ 1˜⟩
-    ! 𝕨 (Lcs<⌊○≠)◶⟨Msg,"Malformed bracket nesting"⟩ 𝕩
+    # Horrible stack-based algorithm
+    S←⊑⟜𝕩 ⋄ K‿D←{⋈∾¨⟜(𝕏⋈)˜}¨↓‿↑     # Select; Keep; Discard
+    Ma←⋈¯1⊸↓⌾⊑ ⋄ DT←¯1‿0⊸(↓¨∾¨·⌽↑¨) # Match; Discard Top
+    Upd ← {𝕨(2|S)◶⟨K,(0<≠∘⊑∘⊢)◶⟨D,(1≠-○S⟜(¯1⊑⊑))◶⟨Ma⊢, D∾𝕊⟜DT⟩⟩⟩𝕩}
+    i ← ((⊑⊢⊐⌊´)≠¨)⊸⊑ ∾¨ (⋈⋈˜↕0) ((64⌊≠)⊸↑·(∊⊑¨)⊸/·∾Upd¨)´⌽ /𝕩 M bB
+    ("Unmatched bracket" Pl i) _err_ i 1
   }
   _err_←{(!(∧∘⍉(i≍e˙)⊏⎉1˜/⟜𝔾)⋈𝔽)⍟(∨´⍟=)}
 
@@ -133,8 +136,8 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
   # Open brackets have role ¯1 and closed ones have role 0
   "Empty program" ! 0<≠𝕩
   g←⍋pd←+`p←(¯1-2×r)×𝕩 M bB⋄gb←g⊏r=¯1       # Paren (actually any bracket type) depth and grade
-  (g⊏p)(>⟜0⊸/ErrMismatchedBrackets⍟≢1-˜<⟜0⊸/)gx←g⊏𝕩
-  "Swapped open and closed brackets" ! 0≤(⊑g)⊑pd
+  ErrMismatchedBrackets∘𝕩⍟¬ (g⊏p)(>⟜0⊸/≡1-˜<⟜0⊸/)gx←g⊏𝕩
+  "Swapped open and closed brackets"_err_(1↑G) 0>(⊑g)⊑pd
   "Parentheses can't contain separators"_err_(gb/G) ((⊑bB)⊸=»⊸∧pred⊸=∨sep⊸=)gbx←gb/gx
   "Predicates can't be placed inside lists"_err_((sep≠GBX)/gb/G) ((4+⊑bB)⊸=»⊸∧pred⊸=)sep⊸≠⊸/gbx
   {"Empty statement or expression"_err_(𝕩/0∾G) (4+⊑bB)≠𝕩/0∾gx}1⊸«⊸∧1∾gb
@@ -318,12 +321,13 @@ Parse ← {r‿vn‿i‿e‿def←𝕨⋄nv←≠vn
 
   # Object code generation: numbers oc ordered by source location (after rev) oi
   ao←48+(0⌈(1+⊑bG)-˜ai⊏𝕩+ma+mm)∾-hd         # Assignment opcode
-  or←⍋oi←idor∾g⊏˜∾⟨cn,cn,bk,bk,hq,api,2/l,at,dr,qp,al+1,al+1,oa+1⌈oa⊏os,fl,rt⟩
+  or←⍋oi←idor∾g⊏˜∾oil←⟨cn,cn,bk,bk,hq,api,2/l,at,dr,qp,al+1,al+1,oa+1⌈oa⊏os,fl,rt⟩
   oc←or⊏∾idoc∾⟨0¨cn,ob,1¨bk,1+↕≠bk,43¨hq,44¨api,⥊⍉(11+l⊏aa)≍ll,ao,6¨dr,42¨qp,66¨al,vi-˜(al-1)⊏𝕩
                24+oa⊏r,16+(fn/dy+2×fm⌈1=ny)+4×0<fa⊏er,¯1↓rc←7+nf⟩
   # Instruction source positions
-  MI←-⊸↓˜⟜≠∾g⊏˜⊢⋄oj←(rt-∘≠⊸⌽oi⌊1-˜≠i)Mi∾⟨1-˜at,oa,fa⟩
-  ind←⟨oj,oj Mi fa⊏IT»¬ro∨ma⟩(¯1∾˜or⊏(≠rt)⊸⌽)⊸⊏¨i‿e
+  ui←8‿13‿14(⊏⟜(»+`)+⟜↕¨⊏)(≠idor)∾≠¨oil  # at,oa+…,fl locations
+  oj←(g⊏˜∾⟨at-1‿0/˜≠¨ai‿hj,oa,fa⟩)⌾((∾ui)⊸⊏)oi
+  ind←⟨oj,(g⊏˜fa⊏IT»¬ro∨ma)⌾((¯1⊑ui)⊸⊏)oj⟩(¯1∾˜or⊸⊏)⊸⊏¨i‿e
   # Indices for multi-body blocks
   cm∨↩(fx∧1≠cw)∨0<ut↩ut⌾(ch⊸/)ch            # Dyad- and inverse-only generate as multiple
   cj←/cv←1+1=ciw←cw⊏˜ci←/cm                 # Number of copies

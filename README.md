@@ -14,6 +14,7 @@ E ← ⊐⟜":"⊸(↑At"class="∾1⊸+⊸↓)⊸Enc
 repl ← "div:cont" E ⟨
   "div:kb" E ""
   "div:rel" E ⟨
+    "div:highlight" E ""
     "textarea:code|rows=1|spellcheck=false" E "<⟜'a'⊸/ ""Big Questions Notation"""
     "svg:demo|viewBox=0 -6 4 12" E "path" Elt "d"‿"M1 -6H0L1 0L0 6H1L4 0z"
   ⟩
@@ -28,13 +29,13 @@ Looking for a modern, powerful language centered on Ken Iverson's array programm
 - A low-dependency C implementation using bytecode compilation: [installation](running.md)
 - Basic [system functions](spec/system.md) for common math, file, and IO operations
 - Documentation with examples, visuals, explanations, and rationale for features
+- Replace or extend primitives to make a [BQN-like language](doc/rebqn.md) suited for specialized domains
 
 BQN **will provide**:
 
 - State of the art array performance: takes some time, but I developed many of Dyalog APL's current algorithms and know we'll get there
 - Interfaces to connect with other languages, like a C FFI and JSON and CSV tools
 - A standard system to install and use libraries and packages, and support for package managers
-- Replace or extend primitives to make a BQN-like language suited for specialized domains
 
 At present, I think BQN is a good choice for learning array programming, scripting, medium-scale number crunching, and recreational programming. For some examples of BQN in action, this repository holds the dreaded [self-hosted compiler](src/c.bqn) and the friendlier [markdown processor](md.bqn) used to generate the site. See also my scripts at [bqn-libs](https://github.com/mlochbaum/bqn-libs), this [gnuplot interface](https://github.com/frasiyav/BQN-Gnuplot/blob/main/Gnuplot.bqn), some nicely commented Advent of Code 2021 [solutions](https://gitlab.com/icen/aoc21), or something else from the [community](community/README.md) page.
 
@@ -51,7 +52,7 @@ BQN aims to remove irregular and burdensome aspects of the APL tradition, and pu
 
 It incorporates concepts developed over years of APL practice:
 * With the [**leading axis model**](doc/leading.md), simpler primitives span the same functionality.
-* [Trains](doc/train.md) and combinators enable **tacit programming**.
+* [Trains](doc/train.md) and combinators enable [**tacit programming**](doc/tacit.md).
 * Lightweight [**anonymous functions**](doc/block.md) (like [dfns](https://aplwiki.com/wiki/Dfn)) borrow some power from Lisp.
 
 But it's redesigned from the ground up, with many features new to the array paradigm:

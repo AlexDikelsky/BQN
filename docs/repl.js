@@ -17,24 +17,32 @@ if (doc.count) {
     setcount(c.value.slice(s,e), 2);
   }
 }
+let clearHighlight = doc.code.oninput = () => {
+  doc.highlight.innerText = '';
+}
 
 let setExplain = e=>e;
-let repl = ()=>{
+let repl = () => {
   let s=Array.from(doc.code.value), src=str(s);
-  doc.rslt.classList.remove('err');
-  doc.rslt.textContent=' '; setExplain();
+  doc.rslt.textContent=' '; setExplain(); clearHighlight();
   setcount(s);
   setTimeout(() => {
+    doc.rslt.textContent = '';
+    let ssep='', sep = () => doc.rslt.append(ssep);
+    let disp = t => { sep(); ssep='\n'; doc.rslt.append(t); }
+    sysvals.show = (x,w) => { disp(fmt(x)); return x; }
+    sysvals.out  = (x,w) => { disp(req1str("•Out",x,w)); return x; }
+    didInitPlot = 0;
     try {
-      let out=[]; sysvals.show = (x,w) => { out.push(x); return x; }
-      didInitPlot = 0;
       let c=compile(src);
       setExplain(src,c);
-      out.push(run.apply(null,c));
-      doc.rslt.textContent=out.map(fmt).join('\n');
+      disp(fmt(run.apply(null,c)));
     } catch(e) {
-      doc.rslt.classList.add('err');
-      doc.rslt.textContent=fmtErr(e);
+      let n = document.createElement('span');
+      n.classList.add('Error');
+      n.innerText = fmtErr(e);
+      sep(); disp(n);
+      highlightErr(s, e);
     }
     sysvals.js=dojs; // In case it was disabled by fragment loading
   }, 0);
@@ -54,9 +62,11 @@ if (doc.doexplain) doc.doexplain.onclick = () => {
       e.innerHTML = s?drawEval(s,c).map(l=>l.join("")).join("\n"):'';
       setTimeout(() => {
         e.querySelectorAll('tspan').forEach(t => {
-          let h = primhelp[t.textContent];
+          let c = t.textContent, h = primhelp[c];
           if (!h) return;
           t.innerHTML = t.textContent+'<title>'+h+'</title>';
+          t.classList.add('clickable');
+          t.onclick = ev => { window.open(helpurl[c]); }
         });
       }, 0);
     }
@@ -84,13 +94,42 @@ sysvals.plot = (x,w) => {
 }
 sysvals.setplot = (x,w) => { startPlot(); setPlot(x,w); }
 
+let highlightErr = (s, e) => {
+  let h = doc.highlight;
+  h.style.height = doc.code.clientHeight+"px";
+  let scroll = doc.code.onscroll = () => {
+    h.scrollTop  = doc.code.scrollTop;
+    h.scrollLeft = doc.code.scrollLeft;
+  }
+
+  clearHighlight();
+  let w=e.message, is;
+  while (w && (w.loc||(e.kind!=='!'&&w.sh&&w.sh[0]===2))
+           && w.src.join('')===s.join('')) { [is,w]=w; }
+  if (is) {
+    let n, pair=0;
+    if (!is.sh) { n=1; is=[is]; }
+    else { n=is.sh[0]; pair=is.sh.length>1; if(pair)n*=2; }
+    let l=0, sl = j=>s.slice(l,l=j).join('');
+    for (let i=0; i<n; ) {
+      let b=is[i++]; h.append(sl(b));
+      if (pair) for (b=is[i++]; i<n&&b+1>=is[i]; i+=2) b=is[i+1];
+      let m = document.createElement('mark');
+      m.innerText = sl(b+1); h.append(m);
+    }
+    h.append(sl());
+  }
+  scroll();
+}
+
 let keymode=0; // 1 for prefix
 let prefix='\\';
+let modified=ev=>ev.shiftKey||ev.ctrlKey||ev.altKey||ev.metaKey;
 doc.code.onkeydown = ev => {
   let k = ev.which;
   if (16<=k && k<=20) {
     return;
-  } if (k==13 && (ev.shiftKey||ev.ctrlKey||ev.altKey||ev.metaKey)) { // *-enter
+  } if (k==13 && modified(ev)) { // *-enter
     repl(); return false;
   } if (keymode) {
     keymode = 0;
@@ -100,11 +139,11 @@ doc.code.onkeydown = ev => {
   } else if (ev.key==prefix) {
     keymode = 1;
     doc.kb.classList.add('prefix');
-    ev.preventDefault();
+    return false;
   }
 }
 let typeChar = (t, c, ev) => {
-  ev.preventDefault();
+  clearHighlight();
   let v = t.value;
   let i = t.selectionStart;
   t.value = v.slice(0,i)+c+v.slice(t.selectionEnd);
@@ -112,32 +151,32 @@ let typeChar = (t, c, ev) => {
   return false;
 }
 
-let syncls={ v:"Value", f:"Function", m:"Modifier", d:"Modifier2", n:"Number", g:"Gets", p:"Paren", b:"Bracket", k:"Brace", l:"Ligature", n:"Nothing", s:"Separator", c:"Comment", a:"String" };
-let keydesc='f+Conjugate;Add_f-Negate;Subtract_f×Sign;Multiply_f÷Reciprocal;Divide_f⋆Exponential;Power_f√Square Root;Root_f⌊Floor;Minimum_f⌈Ceiling;Maximum_f∧Sort Up;And_f∨Sort Down;Or_f¬Not;Span_f|Absolute Value;Modulus_f≤Less Than or Equal to_f<Enclose;Less Than_f>Merge;Greater Than_f≥Greater Than or Equal to_f=Rank;Equals_f≠Length;Not Equals_f≡Depth;Match_f≢Shape;Not Match_f⊣Identity;Left_f⊢Identity;Right_f⥊Deshape;Reshape_f∾Join;Join to_f≍Solo;Couple_f⋈Enlist;Pair_f↑Prefixes;Take_f↓Suffixes;Drop_f↕Range;Windows_f«Shift Before_f»Shift After_f⌽Reverse;Rotate_f⍉Transpose;Reorder axes_f/Indices;Replicate_f⍋Grade Up;Bins Up_f⍒Grade Down;Bins Down_f⊏First Cell;Select_f⊑First;Pick_f⊐Classify;Index of_f⊒Occurrence Count;Progressive Index of_f∊Mark First;Member of_f⍷Deduplicate;Find_f⊔Group Indices;Group_f!Assert;Assert with message_m˙Constant_m˜Self/Swap_d∘Atop_d○Over_d⊸Before/Bind_d⟜After/Bind_d⌾Under_d⊘Valences_d◶Choose_d⎊Catch_d⎉Rank_m˘Cells_d⚇Depth_m¨Each_m⌜Table_d⍟Repeat_m⁼Undo_m´Fold_m˝Insert_m`Scan_g←Define_g⇐Export_g↩Change_s⋄Separator_s,Separator_v.Namespace field_p(Begin expression_p)End expression_k{Begin block_k}End block_b⟨Begin list_b⟩End list_l‿Strand_n·Nothing_v•System_v𝕨Left argument_f𝕎Left argument (as function)_v𝕩Right argument_f𝕏Right argument (as function)_v𝕗Modifier left operand (as subject)_f𝔽Modifier left operand_v𝕘2-modifier right operand (as subject)_f𝔾2-modifier right operand_v𝕤Current function (as subject)_f𝕊Current function_m𝕣Current modifier_n¯Minus_nπPi_n∞Infinity_a@Null character_c#Comment'.split(/[\n_]/);
+let syncls={ v:"Value", f:"Function", m:"Modifier", d:"Modifier2", n:"Number", g:"Gets", p:"Paren", b:"Bracket", k:"Brace", h:"Head", l:"Ligature", n:"Nothing", s:"Separator", c:"Comment", a:"String" };
+let keydesc='f+Conjugate;Add_f-Negate;Subtract_f×Sign;Multiply_f÷Reciprocal;Divide_f⋆Exponential;Power_f√Square Root;Root_f⌊Floor;Minimum_f⌈Ceiling;Maximum_f∧Sort Up;And_f∨Sort Down;Or_f¬Not;Span_f|Absolute Value;Modulus_f≤Less Than or Equal to_f<Enclose;Less Than_f>Merge;Greater Than_f≥Greater Than or Equal to_f=Rank;Equals_f≠Length;Not Equals_f≡Depth;Match_f≢Shape;Not Match_f⊣Identity;Left_f⊢Identity;Right_f⥊Deshape;Reshape_f∾Join;Join to_f≍Solo;Couple_f⋈Enlist;Pair_f↑Prefixes;Take_f↓Suffixes;Drop_f↕Range;Windows_f«Shift Before_f»Shift After_f⌽Reverse;Rotate_f⍉Transpose;Reorder axes_f/Indices;Replicate_f⍋Grade Up;Bins Up_f⍒Grade Down;Bins Down_f⊏First Cell;Select_f⊑First;Pick_f⊐Classify;Index of_f⊒Occurrence Count;Progressive Index of_f∊Mark First;Member of_f⍷Deduplicate;Find_f⊔Group Indices;Group_f!Assert;Assert with message_m˙Constant_m˜Self/Swap_d∘Atop_d○Over_d⊸Before/Bind_d⟜After/Bind_d⌾Under_d⊘Valences_d◶Choose_d⎊Catch_d⎉Rank_m˘Cells_d⚇Depth_m¨Each_m⌜Table_d⍟Repeat_m⁼Undo_m´Fold_m˝Insert_m`Scan_g←Define_g⇐Export_g↩Change_s⋄Separator_s,Separator_v.Namespace field_p(Begin expression_p)End expression_k{Begin block_k}End block_h;Next body_h:Header_h?Predicate_b⟨Begin list_b⟩End list_l‿Strand_n·Nothing_v•System_v𝕨Left argument_f𝕎Left argument (as function)_v𝕩Right argument_f𝕏Right argument (as function)_v𝕗Modifier left operand (as subject)_f𝔽Modifier left operand_v𝕘2-modifier right operand (as subject)_f𝔾2-modifier right operand_v𝕤Current function (as subject)_f𝕊Current function_m𝕣Current modifier_n¯Minus_nπPi_n∞Infinity_a@Null character_c#Comment'.split(/[\n_]/);
 let kk=Array.from('`123456890-=~!@#$%^&*()_+qwertuiop[]QWERTIOP{}asdfghjkl;ASFGHKL:"zxcvbm,./ZXVBM<>? \'');
 let kv=Array.from('˜˘¨⁼⌜´˝∞¯•÷×¬⎉⚇⍟◶⊘⎊⍎⍕⟨⟩√⋆⌽𝕨∊↑∧⊔⊏⊐π←→↙𝕎⍷𝕣⍋⊑⊒⍳⊣⊢⍉𝕤↕𝕗𝕘⊸∘○⟜⋄↖𝕊𝔽𝔾«⌾»·˙⥊𝕩↓∨⌊≡∾≍≠⋈𝕏⍒⌈≢≤≥⇐‿↩');
-let keys={}, revkeys={}, primhelp={};
+let keys={}, revkeys={}, primhelp={}, helpurl={};
 kk.map((k,i)=>{keys[k]=kv[i];revkeys[kv[i]]=k;});
 doc.kb.innerHTML = keydesc
-  .map(d=>'<span class="'+syncls[d[0]]+'">'+Array.from(d)[1]+'</span>')
+  .map(d=>'<a class="key '+syncls[d[0]]+'">'+Array.from(d)[1]+'</a>')
   .concat(['<a href="keymap.html" target="_blank">map</a>'])
   .join("&#8203;"); // zero-width space
 let setPrefix = () => {
-  doc.kb.querySelectorAll("span").forEach((x,i) => {
+  doc.kb.querySelectorAll("a.key").forEach((x,i) => {
     let d = keydesc[i];
     let c = Array.from(d)[1];
     let t = d.slice(1+c.length).replace(';','\n');
+    let h = t.toLowerCase().replace(/ (\(.*)?/g,'')
+                           .replace(/[\n/]/g,'_');
     let k = revkeys[c]; if (k) t += '\n'+prefix+(k==='"'?'&quot;':k);
     x.title = primhelp[c] = t;
+    x.href = helpurl[c] = 'help/'+h+'.html';
+    x.onmousedown = ev => false; // don't take focus
+    x.onclick = ev => ev.button || modified(ev) ? true
+                    : typeChar(doc.code, c, ev);
   });
 }
 setPrefix();
-doc.kb.onmousedown = ev => {
-  let t = ev.target;
-  if (t.nodeName === 'SPAN') {
-    return typeChar(doc.code, t.textContent, ev);
-  }
-}
 
 let appendHTML = (e,a) => e.insertAdjacentHTML('beforeend', a);
 appendHTML(doc.kb, '<div class="kbext"></div>');
